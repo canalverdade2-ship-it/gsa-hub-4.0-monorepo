@@ -16,3 +16,5 @@ gsa-hub-4.0-release.zip
 release-current/
 archive/
 supabase/legacy-marketplace-migrations/
+**/artifacts/
+**/supabase/.temp/
