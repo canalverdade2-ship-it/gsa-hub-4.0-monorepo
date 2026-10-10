@@ -1,0 +1,356 @@
+/*
+ * GSA HUB — HOME PLANO 3
+ * Evolução isolada da central de navegação pública.
+ * O escopo é restrito à Home e depende da classe .gsa-home-plan-3.
+ */
+
+.gsa-home-plan-3 #gsa-navigator {
+  position: relative;
+  z-index: 30;
+  margin-top: 0;
+  padding-top: 0 !important;
+  padding-bottom: 5.5rem !important;
+  border-bottom: 0 !important;
+  background: #e9e3d8 !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div {
+  position: relative;
+  overflow: hidden;
+  max-width: 80rem;
+  padding: clamp(1.25rem, 3vw, 2.75rem);
+  border: 1px solid rgba(213, 184, 107, 0.28);
+  background: #091622;
+  box-shadow: 0 32px 90px rgba(4, 12, 20, 0.26);
+}
+
+.gsa-home-plan-3 #gsa-navigator > div::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: #d5b86b;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:first-child {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 0.9fr) !important;
+  gap: 2rem !important;
+  align-items: end !important;
+  padding-bottom: clamp(1.5rem, 3vw, 2.25rem) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:first-child h2 {
+  max-width: 13ch !important;
+  margin-top: 0.75rem !important;
+  color: #ffffff !important;
+  font-size: clamp(2.25rem, 4.5vw, 4.25rem) !important;
+  line-height: 0.98 !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:first-child p:first-child {
+  color: #d5b86b !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:first-child > p {
+  max-width: 35rem !important;
+  color: rgba(255, 255, 255, 0.64) !important;
+  line-height: 1.75 !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  grid-auto-flow: dense;
+  gap: 0.75rem !important;
+  margin-top: 1.25rem !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button {
+  position: relative;
+  display: flex !important;
+  min-height: 15rem !important;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+  padding: clamp(1.4rem, 2.4vw, 2rem) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 3px;
+  text-align: left;
+  box-shadow: none;
+  transform: translateY(0);
+  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease, background-color 240ms ease !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:hover {
+  z-index: 2;
+  border-color: rgba(213, 184, 107, 0.72) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button::before {
+  position: absolute;
+  top: clamp(1.4rem, 2.4vw, 2rem);
+  right: 3.2rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  color: currentColor;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  opacity: 0.34;
+  pointer-events: none;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:hover::before {
+  transform: translateX(6px);
+  opacity: 0.7;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 4rem;
+  height: 4rem;
+  content: '';
+  border-top: 1px solid currentColor;
+  border-left: 1px solid currentColor;
+  opacity: 0.12;
+  pointer-events: none;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:hover::after {
+  width: 100%;
+  height: 100%;
+  opacity: 0.04;
+  background: currentColor;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(1) {
+  grid-column: span 7;
+  grid-row: span 2;
+  min-height: 31rem !important;
+  background: #102638 !important;
+  color: #ffffff;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(1)::before { content: '01  TECNOLOGIA'; }
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(2) {
+  grid-column: span 5;
+  background: #173b3a !important;
+  color: #ffffff;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(2)::before { content: '02  GESTÃO'; }
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(3) {
+  grid-column: span 5;
+  background: #3a2b25 !important;
+  color: #ffffff;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(3)::before { content: '03  STORE'; }
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(4) {
+  grid-column: span 6;
+  background: #d7c28f !important;
+  color: #0a1722;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(4)::before { content: '04  JORNADA'; }
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(5) {
+  grid-column: span 6;
+  background: #26333f !important;
+  color: #ffffff;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(5)::before { content: '05  FERRAMENTAS'; }
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button > div:first-child {
+  width: 100%;
+  margin-bottom: auto;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button > div:first-child > span {
+  width: 3rem !important;
+  height: 3rem !important;
+  border-color: currentColor !important;
+  color: currentColor !important;
+  opacity: 0.88;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:hover > div:first-child > span {
+  transform: scale(1.15) rotate(-6deg);
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button > div:first-child > svg {
+  color: currentColor !important;
+  opacity: 0.76;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button > p:first-of-type {
+  margin-top: 2.5rem !important;
+  color: #d5b86b !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(4) > p:first-of-type,
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(6) > p:first-of-type {
+  color: #6d5725 !important;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button h3 {
+  max-width: 18ch !important;
+  color: currentColor !important;
+  font-size: clamp(1.45rem, 2.1vw, 2rem) !important;
+  line-height: 1.08 !important;
+}
+
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button > p:last-child {
+  max-width: 34rem !important;
+  color: currentColor !important;
+  opacity: 0.66;
+}
+
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(4):hover h3,
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(4):hover > p:last-child,
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(6):hover h3,
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(6):hover > p:last-child {
+  color: #0a1722 !important;
+}
+
+@media (min-width: 768px) and (max-width: 1279px) {
+  .gsa-home-plan-3 #gsa-navigator {
+    margin-top: 0;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button {
+    grid-column: span 1 !important;
+    grid-row: auto !important;
+    min-height: 15rem !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(7) {
+    grid-column: span 2 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .gsa-home-plan-3 #gsa-navigator {
+    margin-top: 0;
+    padding-right: 0.75rem !important;
+    padding-bottom: 3.5rem !important;
+    padding-left: 0.75rem !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div {
+    padding: 1rem;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:first-child {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:first-child h2 {
+    max-width: 16ch !important;
+    font-size: clamp(2rem, 10vw, 3rem) !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button,
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(n) {
+    width: 100% !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    min-height: 13.5rem !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button::before {
+    top: 1.4rem;
+    right: 3.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button {
+    transition: none !important;
+  }
+
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:hover {
+    transform: none;
+  }
+}
+/* Home: clear anchor destinations below the fixed header. */
+.gsa-home-plan-3 main section[id] {
+  scroll-margin-top: 6rem;
+}
+.gsa-home-plan-3 .gsa-home-hero h1 {
+  text-wrap: balance;
+}
+.gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(1) {
+  min-height: 25rem !important;
+}
+@media (max-width: 767px) {
+  .gsa-home-header .gsa-public-header-login-label { display: none; }
+  .gsa-home-header .gsa-public-header-login { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .gsa-home-plan-3 #gsa-navigator > div > div:nth-child(2) > button:nth-child(1) { min-height: 13.5rem !important; }
+
+}
+
+/* Keep mobile quotation cards clear of the floating contact shortcut. */
+@media (max-width: 767px) {
+  body.gsa-protection-in-view .gsa-floating-whatsapp { display: none; }
+}
+
+/* Footer refinement applies only while the public home is rendered. */
+.gsa-home-plan-3:has(#sobre-gsa) footer {
+  background: #080f18;
+  padding-block: 3rem;
+}
+.gsa-home-plan-3:has(#sobre-gsa) footer h2 { color: #dfc47c; }
+.gsa-home-plan-3:has(#sobre-gsa) footer p { color: #bfcbd8; font-size: 1rem; line-height: 1.75; }
+.gsa-home-plan-3:has(#sobre-gsa) footer a,
+.gsa-home-plan-3:has(#sobre-gsa) footer button {
+  display: inline-flex;
+  align-items: center;
+  text-align: left;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+.gsa-home-plan-3:has(#sobre-gsa) footer a:focus-visible,
+.gsa-home-plan-3:has(#sobre-gsa) footer button:focus-visible { outline: 2px solid #dfc47c; outline-offset: 4px; }
+@media (max-width: 767px) {
+  .gsa-home-plan-3:has(#sobre-gsa) footer a,
+  .gsa-home-plan-3:has(#sobre-gsa) footer button {
+    min-height: 44px;
+  }
+  .gsa-home-plan-3:has(#sobre-gsa) footer > div { gap: 1.5rem; padding-inline: 1.25rem; }
+  .gsa-home-plan-3:has(#sobre-gsa) footer > div > :not(:first-child) { border-top: 1px solid #334252; padding-top: 1.5rem; }
+  .gsa-home-plan-3:has(#sobre-gsa) footer nav > div { gap: 0.25rem; }
+}

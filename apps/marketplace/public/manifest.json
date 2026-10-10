@@ -1,0 +1,22 @@
+{
+  "name": "GSA Store",
+  "short_name": "GSA Store",
+  "description": "Seu shopping de confiança com as melhores ofertas e produtos de grandes marcas.",
+  "start_url": "/marketplace",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#17345f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo-gsa-hub.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo-gsa-hub.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

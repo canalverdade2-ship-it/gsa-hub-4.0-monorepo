@@ -1,0 +1,16 @@
+[functions.import-products-from-file]
+enabled = true
+verify_jwt = false
+import_map = "./functions/import-products-from-file/deno.json"
+entrypoint = "./functions/import-products-from-file/index.ts"
+
+# Acesso público Free/Pro. A função reconfirma pagamento, voucher, sessão e identidade no servidor.
+[functions.gsa-free-tools-pro]
+enabled = true
+verify_jwt = false
+
+# Webhook público da InfinitePay. O evento nunca libera acesso sem payment_check no servidor.
+[functions.gsa-free-tools-pro-webhook]
+enabled = true
+verify_jwt = false
+

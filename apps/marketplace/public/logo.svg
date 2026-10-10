@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title">
+  <title id="title">GSA HUB</title>
+  <defs>
+    <linearGradient id="gold" x1="10%" y1="100%" x2="90%" y2="0%">
+      <stop offset="0" stop-color="#A87C2B"/>
+      <stop offset=".45" stop-color="#FFF4D0"/>
+      <stop offset="1" stop-color="#C19A43"/>
+    </linearGradient>
+    <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2A3847"/>
+      <stop offset="1" stop-color="#121A24"/>
+    </linearGradient>
+  </defs>
+  <path d="M50 6 82 14v34c0 24-32 46-32 46S18 72 18 48V14Z" fill="url(#navy)" stroke="url(#gold)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M28 50h5v11h-5zm9-8h5v19h-5zm9-12h5v31h-5z" fill="url(#gold)"/>
+  <path d="M17 56c28 26 48 9 68-28C72 58 48 72 17 56Zm6 10c27 24 47 9 65-21C72 73 50 84 23 66Z" fill="url(#gold)"/>
+</svg>

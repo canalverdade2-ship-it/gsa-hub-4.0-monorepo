@@ -1,0 +1,33 @@
+{
+  "name": "gsa-hub-supabase-direto",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5180",
+    "build": "tsc --noEmit && vite build",
+    "start": "vite preview --host 0.0.0.0 --port 4173",
+    "test": "npm run test:supabase",
+    "test:supabase": "node scripts/test_supabase_migrations.mjs",
+    "bootstrap:admin": "node scripts/bootstrap_admin.mjs",
+    "deploy:vps": "powershell -ExecutionPolicy Bypass -File deploy/publish-supabase.ps1"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.9.2",
+    "vite": "^6.4.1"
+  }
+}

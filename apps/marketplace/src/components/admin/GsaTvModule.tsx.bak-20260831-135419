@@ -1,0 +1,99 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Activity, AlertTriangle, Calendar, Clock, Database, FileVideo, ListChecks, Loader2, Plus, RefreshCw, Server, Settings, ShieldCheck, Trash2, Tv2, XCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { callAdminRpc } from '../../lib/adminRpc';
+import { formatDateTime } from '../../lib/utils';
+
+interface GsaTvModuleProps { colaboradorId?: string; colaboradorNome?: string | null; adminType?: 'admin' | 'colaborador' }
+export type TabType = 'status' | 'library' | 'schedule' | 'jobs' | 'incidents' | 'settings';
+export type QualityProfile = '720p30' | '1080p30' | '1080p60';
+export const PROFILES: Record<QualityProfile, { label: string; resolution: string; fps: number; bitrateKbps: number }> = {
+  '720p30': { label: '720p30 HD', resolution: '1280×720', fps: 30, bitrateKbps: 4000 },
+  '1080p30': { label: '1080p30 Full HD', resolution: '1920×1080', fps: 30, bitrateKbps: 6000 },
+  '1080p60': { label: '1080p60 Full HD', resolution: '1920×1080', fps: 60, bitrateKbps: 8500 },
+};
+type Snapshot = { channel: any | null; media: any[]; schedule: any[]; playlists: any[]; incidents: any[]; jobs: any[]; audit: any[]; server_time?: string };
+const EMPTY: Snapshot = { channel: null, media: [], schedule: [], playlists: [], incidents: [], jobs: [], audit: [] };
+const tabs: Array<{ id: TabType; label: string; icon: React.ElementType }> = [
+  { id: 'status', label: 'Estado operacional', icon: Activity }, { id: 'library', label: 'Biblioteca', icon: FileVideo },
+  { id: 'schedule', label: 'Programação', icon: Calendar }, { id: 'jobs', label: 'Tarefas', icon: ListChecks },
+  { id: 'incidents', label: 'Incidentes', icon: AlertTriangle }, { id: 'settings', label: 'Configurações', icon: Settings },
+];
+const msg = (e: unknown) => e instanceof Error ? e.message : String((e as any)?.message || e || 'Erro inesperado.');
+
+function Badge({ value }: { value?: string }) {
+  const v = String(value || 'desconhecido').toLowerCase();
+  const good = ['online', 'ready', 'completed', 'confirmed', 'resolved'].includes(v);
+  const wait = ['pending', 'processing', 'running'].includes(v);
+  return <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${good ? 'bg-emerald-50 text-emerald-700' : wait ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700'}`}>{value || 'Desconhecido'}</span>;
+}
+
+export function GsaTvModule(_props: GsaTvModuleProps) {
+  const [tab, setTab] = useState<TabType>('status');
+  const [data, setData] = useState<Snapshot>(EMPTY);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [media, setMedia] = useState({ title: '', filename: '', duration: '60', path: '', rights: false });
+  const [slot, setSlot] = useState({ mediaId: '', start: '', end: '', type: 'program' });
+  const [channel, setChannel] = useState({ name: '', profile: '720p30' as QualityProfile, youtubeVideoId: '' });
+
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) setLoading(true);
+    try {
+      const value = await callAdminRpc<Snapshot>('gsa_admin_gsa_tv_snapshot');
+      setData({ ...EMPTY, ...value }); setError('');
+      if (value.channel) setChannel({ name: value.channel.name || '', profile: (value.channel.quality_profile || '720p30') as QualityProfile, youtubeVideoId: value.channel.config?.youtube_video_id || '' });
+    } catch (e) { setError(msg(e)); } finally { if (!quiet) setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); const timer = window.setInterval(() => void load(true), 15000); return () => window.clearInterval(timer); }, [load]);
+
+  const mutate = async (action: string, payload: Record<string, unknown>, success: string) => {
+    setSaving(true);
+    try { await callAdminRpc('gsa_admin_gsa_tv_mutate', { p_action: action, p_payload: payload }); toast.success(success); await load(true); return true; }
+    catch (e) { toast.error(msg(e)); return false; } finally { setSaving(false); }
+  };
+  const heartbeatAge = data.channel?.last_heartbeat_at ? Date.now() - new Date(data.channel.last_heartbeat_at).getTime() : Infinity;
+  const operational = heartbeatAge < 120000 && data.channel?.status === 'online';
+  const readyMedia = useMemo(() => data.media.filter((x) => x.state === 'ready' && x.rights_ok), [data.media]);
+  const enqueue = (jobType: string) => mutate('enqueue_job', { channel_id: data.channel?.id, job_type: jobType, payload: {} }, 'Tarefa registrada. A conclusão será confirmada pelo serviço.');
+
+  if (loading) return <div className="flex min-h-[360px] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-indigo-600" /></div>;
+  return <section className="space-y-5">
+    <header className="rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4"><div className="flex gap-3"><div className="rounded-xl bg-indigo-500/20 p-3"><Tv2 className="h-6 w-6 text-indigo-300" /></div><div><h1 className="text-xl font-black">GSA TV — Central operacional</h1><p className="mt-1 text-sm text-slate-300">Dados protegidos, programação validada e comandos rastreáveis.</p></div></div><button onClick={() => void load()} className="flex items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold"><RefreshCw className="h-4 w-4" />Atualizar</button></div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-3"><Metric label="Canal"><div className="flex items-center gap-2"><strong>{data.channel?.name || 'Não configurado'}</strong><Badge value={data.channel?.status} /></div></Metric><Metric label="Heartbeat"><strong className={operational ? 'text-emerald-300' : 'text-amber-300'}>{operational ? 'Serviço respondendo' : 'Sem confirmação recente'}</strong></Metric><Metric label="Incidentes abertos"><strong>{data.incidents.filter((x) => !x.resolved).length}</strong></Metric></div>
+    </header>
+    {error && <div role="alert" className="flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"><XCircle className="h-5 w-5 shrink-0" /><div><strong>Falha ao carregar a GSA TV.</strong><p>{error}</p></div></div>}
+    <nav className="flex gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2" aria-label="Seções da GSA TV">{tabs.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setTab(id)} className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${tab === id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}><Icon className="h-4 w-4" />{label}</button>)}</nav>
+
+    {tab === 'status' && <div className="grid gap-4 lg:grid-cols-2">
+      <Panel title="Estado confirmado" icon={Server}><dl className="space-y-3 text-sm"><Row label="Estado do canal" value={<Badge value={data.channel?.status} />} /><Row label="Último heartbeat" value={data.channel?.last_heartbeat_at ? formatDateTime(data.channel.last_heartbeat_at) : 'Nunca recebido'} /><Row label="Perfil" value={PROFILES[(data.channel?.quality_profile || '720p30') as QualityProfile]?.label} /><Row label="URL HLS" value={data.channel?.stream_url || 'Não configurada'} /></dl>{!operational && <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">O painel não presume transmissão ativa sem heartbeat recente.</p>}</Panel>
+      <Panel title="Ações operacionais seguras" icon={ShieldCheck}><div className="grid gap-2 sm:grid-cols-2"><Action onClick={() => void enqueue('health_check')} disabled={saving}>Verificar serviços</Action><Action onClick={() => void enqueue('validate_schedule')} disabled={saving}>Validar programação</Action><Action onClick={() => void enqueue('compile_playlist')} disabled={saving}>Compilar playlist</Action><Action onClick={() => void enqueue('playout_reload')} disabled={saving}>Recarregar playout</Action></div><p className="mt-3 text-xs text-slate-500">Transmissões externas não são iniciadas pelo navegador.</p></Panel>
+      <Panel title="Auditoria recente" icon={Database} className="lg:col-span-2"><List empty="Nenhum evento registrado.">{data.audit.slice(0, 10).map((x) => <Item key={x.id} title={x.action} subtitle={`${x.actor} · ${formatDateTime(x.created_at)}`} trailing={x.resource_type} />)}</List></Panel>
+    </div>}
+
+    {tab === 'library' && <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+      <Panel title="Registrar mídia" icon={Plus}><form onSubmit={async (e) => { e.preventDefault(); const ok = await mutate('save_media', { channel_id: data.channel?.id, title: media.title, original_filename: media.filename, duration_s: Number(media.duration), drive_path: media.path, rights_ok: media.rights, state: media.path ? 'processing' : 'blocked' }, 'Mídia registrada para processamento.'); if (ok) setMedia({ title: '', filename: '', duration: '60', path: '', rights: false }); }} className="space-y-3"><Field label="Título"><input required value={media.title} onChange={(e) => setMedia({ ...media, title: e.target.value })} /></Field><Field label="Nome do arquivo"><input value={media.filename} onChange={(e) => setMedia({ ...media, filename: e.target.value })} /></Field><Field label="Duração em segundos"><input required min="1" type="number" value={media.duration} onChange={(e) => setMedia({ ...media, duration: e.target.value })} /></Field><Field label="Caminho no armazenamento"><input required value={media.path} onChange={(e) => setMedia({ ...media, path: e.target.value })} placeholder="/media/programa.mp4" /></Field><label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={media.rights} onChange={(e) => setMedia({ ...media, rights: e.target.checked })} />Direitos de exibição verificados.</label><button disabled={saving || !media.rights} className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">Registrar</button></form></Panel>
+      <Panel title={`Biblioteca (${data.media.length})`} icon={FileVideo}><List empty="Nenhuma mídia registrada.">{data.media.map((x) => <Item key={x.id} title={x.title} subtitle={`${x.duration_s}s · ${x.drive_path || 'Sem arquivo'}`} trailing={<div className="flex items-center gap-2"><Badge value={x.state} /><button aria-label={`Excluir ${x.title}`} onClick={() => void mutate('delete_media', { id: x.id, channel_id: data.channel?.id }, 'Mídia excluída.')} className="p-1.5 text-rose-600"><Trash2 className="h-4 w-4" /></button></div>} />)}</List></Panel>
+    </div>}
+
+    {tab === 'schedule' && <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+      <Panel title="Nova programação" icon={Calendar}><form onSubmit={async (e) => { e.preventDefault(); try { const ok = await mutate('save_slot', { channel_id: data.channel?.id, media_item_id: slot.mediaId, scheduled_start: new Date(slot.start).toISOString(), scheduled_end: new Date(slot.end).toISOString(), slot_type: slot.type }, 'Programação salva e validada.'); if (ok) setSlot({ mediaId: '', start: '', end: '', type: 'program' }); } catch { toast.error('Datas inválidas.'); } }} className="space-y-3"><Field label="Mídia pronta"><select required value={slot.mediaId} onChange={(e) => setSlot({ ...slot, mediaId: e.target.value })}><option value="">Selecione</option>{readyMedia.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}</select></Field><Field label="Início"><input required type="datetime-local" value={slot.start} onChange={(e) => setSlot({ ...slot, start: e.target.value })} /></Field><Field label="Fim"><input required type="datetime-local" value={slot.end} onChange={(e) => setSlot({ ...slot, end: e.target.value })} /></Field><Field label="Tipo"><select value={slot.type} onChange={(e) => setSlot({ ...slot, type: e.target.value })}><option value="program">Programa</option><option value="commercial">Comercial</option><option value="filler">Preenchimento</option><option value="live">Ao vivo</option></select></Field><button disabled={saving || !readyMedia.length} className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">Validar e salvar</button></form></Panel>
+      <Panel title="Grade cronológica" icon={Clock}><List empty="Nenhuma programação futura.">{data.schedule.map((x) => <Item key={x.id} title={x.title_override || x.media_title || 'Conteúdo'} subtitle={`${formatDateTime(x.scheduled_start)} — ${formatDateTime(x.scheduled_end)}`} trailing={<div className="flex items-center gap-2"><Badge value={x.state} /><button aria-label="Excluir programação" onClick={() => void mutate('delete_slot', { id: x.id, channel_id: data.channel?.id }, 'Programação excluída.')} className="p-1.5 text-rose-600"><Trash2 className="h-4 w-4" /></button></div>} />)}</List></Panel>
+    </div>}
+
+    {tab === 'jobs' && <Panel title="Fila operacional" icon={ListChecks}><List empty="Nenhuma tarefa registrada.">{data.jobs.map((x) => <Item key={x.id} title={x.job_type} subtitle={`${formatDateTime(x.created_at)}${x.error_message ? ` · ${x.error_message}` : ''}`} trailing={<Badge value={x.status} />} />)}</List></Panel>}
+    {tab === 'incidents' && <Panel title="Incidentes" icon={AlertTriangle}><List empty="Nenhum incidente registrado.">{data.incidents.map((x) => <Item key={x.id} title={x.message} subtitle={formatDateTime(x.created_at)} trailing={x.resolved ? <Badge value="resolved" /> : <button disabled={saving} onClick={() => void mutate('resolve_incident', { id: x.id, channel_id: data.channel?.id }, 'Incidente resolvido.')} className="rounded-lg border px-3 py-1.5 text-xs font-bold">Resolver</button>} />)}</List></Panel>}
+    {tab === 'settings' && <Panel title="Configuração não secreta" icon={Settings}><form onSubmit={(e) => { e.preventDefault(); const p = PROFILES[channel.profile]; void mutate('update_channel', { channel_id: data.channel?.id, name: channel.name, quality_profile: channel.profile, config: { youtube_video_id: channel.youtubeVideoId, fps: p.fps, output_resolution: p.resolution.replace('×', 'x'), video_bitrate_kbps: p.bitrateKbps } }, 'Canal atualizado.'); }} className="max-w-xl space-y-3"><Field label="Nome"><input required value={channel.name} onChange={(e) => setChannel({ ...channel, name: e.target.value })} /></Field><Field label="Perfil"><select value={channel.profile} onChange={(e) => setChannel({ ...channel, profile: e.target.value as QualityProfile })}>{Object.entries(PROFILES).map(([id, p]) => <option key={id} value={id}>{p.label} · {p.resolution}</option>)}</select></Field><Field label="ID público do vídeo no YouTube"><input value={channel.youtubeVideoId} onChange={(e) => setChannel({ ...channel, youtubeVideoId: e.target.value.trim() })} placeholder="Opcional" /></Field><div className="rounded-lg bg-indigo-50 p-3 text-sm text-indigo-800"><ShieldCheck className="mr-2 inline h-4 w-4" />Chaves RTMP são gerenciadas apenas no ambiente protegido.</div><button disabled={saving} className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">Salvar</button></form></Panel>}
+  </section>;
+}
+
+function Panel({ title, icon: Icon, children, className = '' }: { title: string; icon: React.ElementType; children: React.ReactNode; className?: string }) { return <div className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}><h2 className="mb-4 flex items-center gap-2 text-base font-black"><Icon className="h-5 w-5 text-indigo-600" />{title}</h2>{children}</div>; }
+function Metric({ label, children }: { label: string; children: React.ReactNode }) { return <div className="rounded-xl bg-white/5 p-3"><p className="text-xs text-slate-400">{label}</p><div className="mt-1">{children}</div></div>; }
+function Row({ label, value }: { label: string; value: React.ReactNode }) { return <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3"><dt className="text-slate-500">{label}</dt><dd className="max-w-[65%] break-all text-right font-semibold">{value}</dd></div>; }
+function Action(props: React.ButtonHTMLAttributes<HTMLButtonElement>) { return <button {...props} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-bold hover:bg-slate-50 disabled:opacity-50" />; }
+function Field({ label, children }: { label: string; children: React.ReactElement }) { return <label className="block text-sm font-semibold text-slate-700"><span className="mb-1 block">{label}</span>{React.cloneElement(children as React.ReactElement<any>, { className: 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100' })}</label>; }
+function List({ children, empty }: { children: React.ReactNode; empty: string }) { const content = React.Children.toArray(children); return content.length ? <div className="divide-y divide-slate-100">{content}</div> : <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">{empty}</div>; }
+function Item({ title, subtitle, trailing }: { title: string; subtitle: string; trailing?: React.ReactNode }) { return <div className="flex items-center justify-between gap-4 py-3"><div className="min-w-0"><p className="truncate font-semibold">{title}</p><p className="mt-0.5 break-all text-xs text-slate-500">{subtitle}</p></div><div className="shrink-0">{trailing}</div></div>; }
+export default GsaTvModule;

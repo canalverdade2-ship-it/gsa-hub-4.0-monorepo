@@ -1,0 +1,13 @@
+{
+  "name": "gsa-hub-monorepo",
+  "private": true,
+  "version": "4.0.0",
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "build:all": "pnpm -r build",
+    "test:all": "pnpm -r --if-present test",
+    "lint:all": "pnpm -r --if-present lint",
+    "audit:all": "node scripts/audit-monorepo.mjs",
+    "audit:monorepo": "node scripts/audit-monorepo.mjs"
+  }
+}

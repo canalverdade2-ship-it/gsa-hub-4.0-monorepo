@@ -1,0 +1,410 @@
+.partner-application-form {
+  color: var(--partners-ink);
+}
+
+.partner-application-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.42fr);
+  gap: 2.5rem;
+  align-items: end;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--partners-line);
+}
+
+.partner-application-intro p {
+  margin: 0;
+  color: var(--partners-muted);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+
+.partner-application-intro strong {
+  display: block;
+  color: var(--partners-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.partner-application-intro span {
+  display: block;
+  margin-top: 0.4rem;
+  color: #7a838a;
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.partner-application-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1.4rem;
+  border: 1px solid var(--partners-line);
+}
+
+.partner-application-progress > div {
+  position: relative;
+  min-height: 78px;
+  border-right: 1px solid var(--partners-line);
+  padding: 0.95rem;
+  background: #f7f4ee;
+}
+
+.partner-application-progress > div:last-child {
+  border-right: 0;
+}
+
+.partner-application-progress > div::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: transparent;
+  content: '';
+}
+
+.partner-application-progress > div.is-complete,
+.partner-application-progress > div.is-current {
+  background: #fffefa;
+}
+
+.partner-application-progress > div.is-complete::after,
+.partner-application-progress > div.is-current::after {
+  background: var(--partners-gold);
+}
+
+.partner-application-progress span {
+  display: block;
+  color: #8b6828;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.partner-application-progress strong {
+  display: block;
+  margin-top: 0.45rem;
+  color: #667079;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.partner-application-progress > div.is-current strong {
+  color: var(--partners-ink);
+}
+
+.partner-application-step-heading {
+  display: grid;
+  grid-template-columns: 3.4rem 1fr;
+  gap: 1.2rem;
+  align-items: start;
+  margin-top: 2rem;
+  padding-bottom: 1.35rem;
+  border-bottom: 1px solid var(--partners-line);
+}
+
+.partner-application-step-heading > span {
+  display: flex;
+  width: 3.4rem;
+  height: 3.4rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--partners-gold);
+  color: #856323;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.partner-application-step-heading h3 {
+  margin: 0;
+  color: var(--partners-ink);
+  font-size: clamp(1.5rem, 2.6vw, 2.35rem);
+  font-weight: 620;
+  letter-spacing: -0.04em;
+}
+
+.partner-application-step-heading p {
+  margin: 0.55rem 0 0;
+  color: var(--partners-muted);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.partner-form-section {
+  padding-block: 1.7rem;
+  border-bottom: 1px solid var(--partners-line);
+}
+
+.partner-form-section__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.partner-form-section__heading svg {
+  width: 1rem;
+  height: 1rem;
+  color: #8b6828;
+}
+
+.partner-form-section__heading h4 {
+  margin: 0;
+  color: var(--partners-ink);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.partner-form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.partner-form-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.partner-form-grid--address {
+  grid-template-columns: 160px minmax(0, 1fr) 120px;
+}
+
+.partner-field {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.partner-field > span,
+.partner-field > label {
+  color: #394650;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.partner-field small {
+  color: #7b858d;
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.partner-input {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid #aeb5ba;
+  border-radius: 0;
+  background: var(--partners-white);
+  padding: 0.8rem 0.9rem;
+  color: var(--partners-ink) !important;
+  font-size: 0.86rem;
+  font-weight: 550 !important;
+  line-height: 1.5;
+  outline: 0;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.partner-input:hover {
+  border-color: #7f8a91;
+}
+
+.partner-input:focus {
+  border-color: var(--partners-navy);
+  box-shadow: 0 0 0 3px rgba(196, 154, 74, 0.18);
+}
+
+textarea.partner-input {
+  min-height: 112px;
+  resize: vertical;
+}
+
+select.partner-input {
+  appearance: auto;
+}
+
+.partner-image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.partner-image-field {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px dashed #9da5aa;
+  background: #fffefa;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.partner-image-field > strong {
+  color: var(--partners-ink);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.partner-image-field__preview {
+  display: flex;
+  min-height: 150px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #ded8cd;
+  background: #eee9df;
+}
+
+.partner-image-field__preview img {
+  width: 100%;
+  height: 150px;
+  object-fit: contain;
+}
+
+.partner-image-field__preview svg {
+  width: 2.6rem;
+  height: 2.6rem;
+  color: #a3a7a7;
+  stroke-width: 1.2;
+}
+
+.partner-image-field input {
+  display: block;
+  width: 100%;
+  color: #69747c;
+  font-size: 0.68rem;
+}
+
+.partner-image-field input::file-selector-button {
+  margin-right: 0.7rem;
+  border: 0;
+  background: var(--partners-navy);
+  padding: 0.55rem 0.75rem;
+  color: white;
+  font-size: 0.67rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.partner-image-field small {
+  color: #78838a;
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
+.partner-consent {
+  display: grid;
+  grid-template-columns: 1.2rem 1fr;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+  border-left: 4px solid var(--partners-gold);
+  background: #f4efe4;
+  padding: 1rem 1.1rem;
+  color: #55616a;
+  font-size: 0.75rem;
+  line-height: 1.65;
+}
+
+.partner-consent input {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.18rem;
+  accent-color: var(--partners-navy);
+}
+
+.partner-form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding-top: 1.5rem;
+}
+
+.partner-form-actions button {
+  min-width: 145px;
+}
+
+.partner-application-success {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 1rem 0 1.5rem;
+  text-align: center;
+}
+
+.partner-application-success__mark {
+  display: flex;
+  width: 82px;
+  height: 82px;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #43835a;
+  color: #287143;
+}
+
+.partner-application-success__mark svg {
+  width: 2.8rem;
+  height: 2.8rem;
+}
+
+.partner-application-success .partners-kicker {
+  justify-content: center;
+  margin-top: 1.8rem;
+  color: #8b6828;
+}
+
+.partner-application-success h2 {
+  margin: 1rem 0 0;
+  color: var(--partners-ink);
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  font-weight: 620;
+  letter-spacing: -0.05em;
+}
+
+.partner-application-success > p:not(.partners-kicker) {
+  max-width: 650px;
+  margin: 1rem auto 0;
+  color: var(--partners-muted);
+  line-height: 1.75;
+}
+
+.partner-protocol-box {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  max-width: 560px;
+  margin: 2rem auto 0;
+  border-block: 1px solid var(--partners-line);
+  padding: 1.1rem 0;
+  text-align: left;
+}
+
+.partner-protocol-box span {
+  display: block;
+  color: #7d858b;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.partner-protocol-box strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--partners-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+}
+
+.partner-protocol-box svg {
+  width: 1.7rem;
+  height: 1.7rem;
+  color: #8b6828;
+}
+
+.partner-application-success button {
+  margin-top: 2rem;
+}

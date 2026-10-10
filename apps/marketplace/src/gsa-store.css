@@ -1,0 +1,257 @@
+/* GSA Store — experiência comercial exclusiva estilo e-commerce gigante (Mercado Livre, Amazon, Shopee) */
+:root {
+  --gsa-store-navy: #17345f;
+  --gsa-store-navy-dark: #0f2342;
+  --gsa-store-gold: #d8bd73;
+  --gsa-store-gold-dark: #a77a2c;
+  --gsa-store-gold-soft: #fbf6ea;
+  --gsa-store-emerald: #059669;
+  --gsa-store-emerald-soft: #ecfdf5;
+  --gsa-store-crimson: #dc2626;
+  --gsa-store-crimson-soft: #fef2f2;
+  --gsa-store-ink: #0f172a;
+  --gsa-store-muted: #64748b;
+  --gsa-store-line: #e2e8f0;
+  --gsa-store-surface: #ffffff;
+  --gsa-store-canvas: #f8fafc;
+}
+
+/* Background geral da loja */
+body:has(#storeSearchInput) {
+  background: var(--gsa-store-canvas);
+  color: var(--gsa-store-ink);
+}
+
+/* Animações e efeitos dos Cards de Marketplace */
+.gsa-product-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gsa-product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -15px rgba(23, 52, 95, 0.15);
+}
+
+/* Bubbles de Categoria estilo Shopee / Magalu */
+.gsa-category-bubble {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.gsa-category-bubble:hover {
+  transform: scale(1.08) translateY(-2px);
+}
+
+/* Badge Pulse efeito Oferta do Dia */
+@keyframes gsa-pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(0.97); }
+}
+.gsa-live-badge {
+  animation: gsa-pulse-subtle 2s infinite ease-in-out;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) {
+  width: min(100%, 1280px);
+  padding-inline: clamp(0.5rem, 2.5vw, 2rem);
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child {
+  gap: 0.75rem !important;
+  margin-bottom: 0.25rem;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child > div:nth-child(2) > div {
+  border: 1px solid var(--gsa-store-line) !important;
+  border-radius: 16px !important;
+  background: var(--gsa-store-surface) !important;
+  padding: 4px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child button {
+  min-height: 48px;
+  border-radius: 12px !important;
+  letter-spacing: 0.04em !important;
+  text-transform: none !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child button > div.absolute {
+  border-radius: 12px !important;
+  background: var(--gsa-store-navy) !important;
+  box-shadow: none !important;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child button:not(:has(> div.absolute)) {
+  color: #64748b !important;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child > button {
+  border-radius: 12px !important;
+  border-color: var(--gsa-store-line) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+}
+
+body:has(#storeSearchInput) div:has(> div > #storeSearchInput) {
+  border: 1px solid var(--gsa-store-line) !important;
+  border-radius: 16px !important;
+  background: var(--gsa-store-surface) !important;
+  padding: 7px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055) !important;
+}
+
+body:has(#storeSearchInput) #storeSearchInput {
+  height: 48px !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+  color: var(--gsa-store-ink) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+body:has(#storeSearchInput) #storeSearchInput:focus {
+  background: #fff !important;
+  outline: 2px solid rgba(23, 52, 95, 0.25) !important;
+}
+
+body:has(#storeSearchInput) div:has(> div > #storeSearchInput) > button {
+  height: 48px !important;
+  width: 48px !important;
+  border: 1px solid var(--gsa-store-navy) !important;
+  border-radius: 12px !important;
+  background: var(--gsa-store-navy) !important;
+  box-shadow: none !important;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div.overflow-x-auto {
+  padding-block: 0.4rem !important;
+  scroll-snap-type: x proximity;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div.overflow-x-auto > button {
+  height: 38px !important;
+  border-width: 1px !important;
+  border-radius: 10px !important;
+  padding-inline: 14px !important;
+  letter-spacing: 0.04em !important;
+  text-transform: none !important;
+  scroll-snap-align: start;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div.overflow-x-auto > button[class*="border-indigo"] {
+  border-color: var(--gsa-store-navy) !important;
+  background: #17345f !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(23, 52, 95, 0.15) !important;
+}
+
+body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div.text-center {
+  border: 1px solid var(--gsa-store-line) !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  backdrop-filter: none !important;
+}
+
+body:has(#storeSearchInput) .fixed.z-\[99999\] button {
+  background: var(--gsa-store-navy) !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 12px 28px rgba(15, 39, 70, 0.24) !important;
+}
+
+body:has(#storeSearchInput) .fixed.z-\[99999\] button > span {
+  background: var(--gsa-store-gold) !important;
+  animation: none !important;
+}
+
+body:has(#storeSearchInput) [role="dialog"] {
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  background: #fff !important;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22) !important;
+}
+
+body:has(#storeSearchInput) [role="dialog"] > div:first-child { border-color: var(--gsa-store-line) !important; }
+
+body:has(#storeSearchInput) [role="dialog"] h2 {
+  color: var(--gsa-store-ink) !important;
+  letter-spacing: -0.02em !important;
+  text-transform: none !important;
+}
+
+body:has(#storeSearchInput) [role="dialog"] input,
+body:has(#storeSearchInput) [role="dialog"] textarea,
+body:has(#storeSearchInput) [role="dialog"] select {
+  border-color: var(--gsa-store-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+}
+
+body:has(#storeSearchInput) [role="dialog"] input:focus,
+body:has(#storeSearchInput) [role="dialog"] textarea:focus,
+body:has(#storeSearchInput) [role="dialog"] select:focus {
+  border-color: var(--gsa-store-navy) !important;
+  box-shadow: 0 0 0 4px rgba(23, 52, 95, 0.1) !important;
+}
+
+body:has(#storeSearchInput) [role="dialog"] button[class*="bg-gradient"],
+body:has(#storeSearchInput) [role="dialog"] button[class*="bg-[#1a1a1a]"],
+body:has(#storeSearchInput) [role="dialog"] button[class*="bg-indigo-6"] {
+  background: var(--gsa-store-navy) !important;
+  box-shadow: none !important;
+}
+
+body:has(#storeSearchInput) [role="dialog"] [class*="text-indigo-6"],
+body:has(#storeSearchInput) [role="dialog"] [class*="text-purple-6"] { color: var(--gsa-store-navy) !important; }
+
+body:has(#storeSearchInput) [role="dialog"] [class*="from-indigo"],
+body:has(#storeSearchInput) [role="dialog"] [class*="from-purple"],
+body:has(#storeSearchInput) [role="dialog"] [class*="via-purple"] {
+  --tw-gradient-from: var(--gsa-store-navy) !important;
+  --tw-gradient-to: var(--gsa-store-navy-dark) !important;
+}
+
+body:has(#storeSearchInput) [role="dialog"] .animate-pulse,
+body:has(#storeSearchInput) [role="dialog"] .animate-bounce,
+body:has(#storeSearchInput) [role="dialog"] [class*="animate-gradient"] { animation: none !important; }
+
+body:has(#storeSearchInput) [role="dialog"] [class*="rounded-[3rem]"],
+body:has(#storeSearchInput) [role="dialog"] [class*="rounded-[2.5rem]"],
+body:has(#storeSearchInput) [role="dialog"] [class*="rounded-[2rem]"] { border-radius: 18px !important; }
+
+body:has(#storeSearchInput) [role="dialog"] button:focus-visible {
+  outline: 2px solid var(--gsa-store-gold) !important;
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) { padding-inline: 0.25rem; }
+  body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding-top: 0.25rem;
+    background: linear-gradient(to bottom, var(--gsa-store-canvas) 80%, transparent);
+  }
+  body:has(#storeSearchInput) .space-y-3:has(#storeSearchInput) > div:first-child button { min-height: 44px; }
+  body:has(#storeSearchInput) div:has(> div > #storeSearchInput) {
+    position: sticky;
+    top: 58px;
+    z-index: 29;
+  }
+  body:has(#storeSearchInput) [role="dialog"] {
+    width: calc(100vw - 0.75rem) !important;
+    max-width: calc(100vw - 0.75rem) !important;
+    max-height: calc(100dvh - 0.75rem) !important;
+    margin: 0.375rem !important;
+    border-radius: 18px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:has(#storeSearchInput) *,
+  body:has(#storeSearchInput) *::before,
+  body:has(#storeSearchInput) *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

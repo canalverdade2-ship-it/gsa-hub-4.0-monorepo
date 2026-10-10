@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "useUnknownInCatchVariables": true,
+    "types": ["vite/client"]
+  },
+  "include": [
+    "src/lib/errorReporter.ts",
+    "src/routing/safeReturnTo.ts",
+    "src/lib/whatsappVariationService.ts",
+    "src/vite-env.d.ts"
+  ]
+}

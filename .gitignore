@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.vite/
+*.log
+.env
+.env.*
+!.env.example
+
+coverage/
+.tmp_*
+.DS_Store
+Thumbs.db
+
+# Generated release artifacts
+gsa-hub-4.0-release.zip
+release-current/
+archive/
+supabase/legacy-marketplace-migrations/

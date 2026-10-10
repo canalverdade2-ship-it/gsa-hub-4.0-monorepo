@@ -1,0 +1,23 @@
+[Unit]
+Description=GSA HUB 3.0 API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gsa-hub
+Group=gsa-hub
+WorkingDirectory=/var/www/gsa-hub
+EnvironmentFile=/etc/gsa-hub/gsa-hub.env
+ExecStart=/opt/node24/bin/node server/index.mjs
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/gsa-hub
+
+[Install]
+WantedBy=multi-user.target

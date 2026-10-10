@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSA HUB I Soluções Digitais</title>
+    <meta name="description" content="Serviços, assinaturas, marketplace e tecnologia reunidos no GSA HUB." />
+    <meta property="og:title" content="GSA HUB I Soluções Digitais" />
+    <meta property="og:description" content="Serviços, assinaturas, marketplace e tecnologia em uma experiência segura e conectada." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/logo.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="GSA HUB I Soluções Digitais" />
+    <meta name="twitter:description" content="Serviços, assinaturas, marketplace e tecnologia em uma experiência segura e conectada." />
+    <meta name="twitter:image" content="/logo.svg" />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="icon" type="image/png" href="/logo.svg" />
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#142030">
+    <link rel="apple-touch-icon" href="/logo-gsa-hub.jpg">
+    <link rel="manifest" href="/manifest.json" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        // Registra Service Worker apenas em ambiente de produção
+        if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registration => {
+              registration.update().catch(() => {});
+              console.log('ServiceWorker registration successful');
+            }).catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+          });
+        } else {
+          // Em desenvolvimento local (localhost), desregistra para evitar bloqueio do Vite / HMR
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            for (const registration of registrations) {
+              registration.unregister();
+            }
+          });
+        }
+      }
+      let refreshingForWorkerUpdate = false;
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshingForWorkerUpdate) return;
+          refreshingForWorkerUpdate = true;
+          window.location.reload();
+        });
+      }
+    </script>
+  </body>
+</html>

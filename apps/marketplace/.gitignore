@@ -1,0 +1,35 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Backups de produção e testes de restauração
+/backups/
+*.dump
+*.backup
+*.pgdump
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Ignore large media files
+scratch/**/*.mp4
+production/**/*.mp4
+assets/**/*.mp4
+*.mp4
+
+# Local secrets and runtime credentials
+/CREDENCIAIS_SISTEMA_GSA.md
+**/secrets/
+*.secret
+*.secrets
+*.key
+*.pem

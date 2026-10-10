@@ -1,0 +1,19 @@
+@import './styles/partners/base.css';
+@import './styles/partners/detail.css';
+@import './styles/partners/application.css';
+@import './styles/partners/application-page.css';
+@import './styles/partners/responsive.css';
+@import './styles/partners/identity.css';
+
+body.gsa-public-partners {
+  --partners-navy: #0c1724;
+  --partners-navy-soft: #152538;
+  --partners-paper: #f3efe7;
+  --partners-paper-deep: #e7dfd1;
+  --partners-ink: #172332;
+  --partners-muted: #617080;
+  --partners-gold: #c49a4a;
+  --partners-gold-light: #e2c98e;
+  --partners-line: #cfc7ba;
+  --partners-white: #fffefa;
+}

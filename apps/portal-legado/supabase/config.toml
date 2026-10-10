@@ -1,0 +1,26 @@
+project_id = "gsa-hub-servicos-supabase"
+
+[api]
+enabled = true
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "http://localhost:5180"
+additional_redirect_urls = ["http://localhost:5180/**"]
+jwt_expiry = 3600
+enable_signup = false
+
+[storage]
+enabled = true
+file_size_limit = "15MiB"
+
+[storage.buckets.gsa3-private]
+public = false
+file_size_limit = "15MiB"
+allowed_mime_types = ["application/pdf", "image/jpeg", "image/png"]

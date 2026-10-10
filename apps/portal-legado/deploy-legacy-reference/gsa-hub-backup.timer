@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup diário do SQLite do GSA HUB 3.0
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+Persistent=true
+RandomizedDelaySec=15m
+Unit=gsa-hub-backup.service
+
+[Install]
+WantedBy=timers.target

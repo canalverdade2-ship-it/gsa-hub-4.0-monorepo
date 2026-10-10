@@ -1,0 +1,36 @@
+{
+  "name": "gsa-hub-3",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"node --watch server/index.mjs\" \"vite --host 0.0.0.0 --port 5180\"",
+    "build": "tsc --noEmit && vite build",
+    "start": "node server/index.mjs",
+    "test": "node scripts/run_all_tests.mjs",
+    "test:supabase-schema": "node scripts/validate_supabase_foundation.mjs",
+    "test:responsive": "node scripts/check-responsive.mjs"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
+    "express": "^5.1.0",
+    "lucide-react": "^0.468.0",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.17.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.58.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.2",
+    "vite": "^6.4.1"
+  }
+}

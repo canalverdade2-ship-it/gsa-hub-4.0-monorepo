@@ -1,0 +1,44 @@
+/* Isolated to the quotation flow; account pages retain their existing theme. */
+.gsa-protection-shell:has(.gsa-quote) { background: #0b1928; }
+.gsa-protection-shell:has(.gsa-quote) > header { background: #0a1522; border-bottom: 1px solid #344253; color: #e6cf8e; }
+.gsa-protection-shell:has(.gsa-quote) > header button { color: #e6cf8e !important; }
+.gsa-protection-shell:has(.gsa-quote) > header button > span { background: transparent !important; }
+.gsa-quote { padding-bottom: 5rem; }
+.gsa-quote > button { color: #bbc8d8; min-height: 44px; font-weight: 500; }
+.gsa-quote-heading { padding: 0 0 1.75rem; }
+.gsa-quote-eyebrow { color: #dfc47c; font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+.gsa-quote-heading h1 { margin-top: 1rem; max-width: 19ch; font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.12; letter-spacing: -.035em; font-weight: 600; color: #f4f7fb; }
+.gsa-quote-intro { color: #becbda; font-size: 1rem; line-height: 1.75; margin-top: 1rem; max-width: 36rem; }
+.gsa-quote-steps { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .75rem; margin-top: 1.75rem; list-style: none; }
+.gsa-quote-steps li { border-top: 2px solid #465469; padding-top: .85rem; display: flex; align-items: center; gap: .6rem; color: #afbed0; font-size: .8125rem; line-height: 1.4; }
+.gsa-quote-steps li > span:first-child { display: flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; flex-shrink: 0; border: 1px solid #657489; border-radius: 50%; font-weight: 700; }
+.gsa-quote-steps li[aria-current], .gsa-quote-steps li[data-complete=true] { color: #eed597; border-color: #dfc47c; }
+.gsa-quote-steps li[aria-current] > span:first-child { background: #dfc47c; color: #0b1928; border-color: #dfc47c; }
+.gsa-quote-panel { background: #edf1f5; border: 1px solid #637083; border-top: 3px solid #dfc47c; border-radius: 12px; padding: 1.5rem; box-shadow: 0 20px 45px #0003; }
+.gsa-quote-panel-caption { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #c4cdd8; color: #536173; font-size: .8125rem; font-weight: 600; }
+.gsa-quote-panel h2 { color: #102638; font-weight: 600; font-size: 1.3rem; letter-spacing: -.02em; }
+.gsa-quote-category { border-radius: 8px; border-color: #c5ac69 !important; border-left: 3px solid #aa873f; background: #11283c !important; padding: 1rem; color: #fff; }
+.gsa-quote-category > p { color: #e6cf8e !important; font-size: .7rem; letter-spacing: .1em; }
+.gsa-quote-category > div > span { background: #203d53 !important; color: #e6cf8e; border-radius: 8px; flex-shrink: 0; }
+.gsa-quote-category > div > div > p:first-child { font-weight: 600; font-size: 1.125rem; }
+.gsa-quote-category > div > div > p:last-child { color: #becbd8; margin-top: .25rem; line-height: 1.5; }
+.gsa-quote-panel label { color: #263c50; font-size: .9375rem; font-weight: 600; }
+.gsa-quote-panel input:not([type=checkbox]), .gsa-quote-panel select, .gsa-quote-panel textarea { min-height: 52px; border: 1px solid #94a4b7; border-radius: 7px; background: #fff; color: #102638; font-size: 1rem; font-weight: 400; padding: .85rem 1rem; box-shadow: 0 2px 3px #10263806; color-scheme: light; }
+.gsa-quote-panel input::placeholder, .gsa-quote-panel textarea::placeholder { color: #68788b; opacity: 1; }
+.gsa-quote-panel input:focus-visible, .gsa-quote-panel select:focus-visible, .gsa-quote-panel textarea:focus-visible { border-color: #806329; outline: 2px solid #a9873c; outline-offset: 2px; box-shadow: none; }
+.gsa-quote-panel label:has(input[type=checkbox]) { border: 1px solid #c0cad5; border-radius: 8px; background: #e1e7ee; font-weight: 400; }
+.gsa-quote-panel input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; accent-color: #11283c; }
+.gsa-quote-actions { border-top: 1px solid #c4cdd8; padding-top: 1.25rem; }
+.gsa-quote-actions button { min-height: 48px; border-radius: 7px; padding: .8rem 1.2rem; font-size: .9375rem; font-weight: 700; }
+.gsa-quote-actions button:first-child { color: #32495d; border-color: #9eafc1; }
+.gsa-quote-actions button:last-child { background: #17354c !important; color: #fff; border: 1px solid #17354c; }
+.gsa-quote-actions button:last-child:not(:disabled):hover { background: #254b67 !important; }
+.gsa-quote-actions button:disabled { opacity: 1; background: #d7dfe7 !important; border-color: #bdc8d3; color: #647284; cursor: not-allowed; }
+.gsa-quote button:focus-visible { outline: 2px solid #dfc47c; outline-offset: 3px; }
+.gsa-quote-success > div { border-radius: 12px; background: #edf1f5; border-top: 3px solid #dfc47c; }
+@media (max-width: 420px) {
+  .gsa-quote { padding-inline: 1rem; }
+  .gsa-quote-panel { padding: 1.2rem; }
+  .gsa-quote-steps li { flex-direction: column; align-items: flex-start; gap: .5rem; font-size: .75rem; }
+  .gsa-quote-actions button { padding-inline: 1rem; }
+}
