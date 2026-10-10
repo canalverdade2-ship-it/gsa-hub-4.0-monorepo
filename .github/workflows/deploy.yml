@@ -31,10 +31,12 @@ jobs:
       - run: pnpm audit:all
       - name: Prepare validated release bundle
         run: |
-          mkdir -p release-bundle/public-site release-bundle/admin-supabase
+          mkdir -p release-bundle/public-site release-bundle/admin-supabase release-bundle/client-supabase release-bundle/marketplace
           cp -a apps/public-site/dist release-bundle/public-site/
           cp -a apps/admin-supabase/dist release-bundle/admin-supabase/
-          tar -czf gsa-hub-release.tgz -C release-bundle public-site admin-supabase
+          cp -a apps/client-supabase/dist release-bundle/client-supabase/
+          cp -a apps/marketplace/dist release-bundle/marketplace/
+          tar -czf gsa-hub-release.tgz -C release-bundle public-site admin-supabase client-supabase marketplace
       - name: Deploy bundle and backup previous release
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}

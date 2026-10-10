@@ -8,8 +8,10 @@ STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 sudo mkdir -p "$BACKUP" "$ROOT/backups/releases"
 # Backup completo da versão atualmente publicada antes de qualquer alteração.
-sudo tar -czf "$BACKUP/current-release.tgz" -C "$ROOT" dist/gsa3-supabase -C /var/www/gsa-hub-staging .
+sudo tar -czf "$BACKUP/current-release.tgz" -C "$ROOT" dist/gsa3-supabase dist/client-supabase dist/marketplace -C /var/www/gsa-hub-staging .
 tar -xzf "$ARCHIVE" -C "$STAGE"
 sudo rsync -a --delete "$STAGE/public-site/dist/" /var/www/gsa-hub-staging/
 sudo rsync -a --delete "$STAGE/admin-supabase/dist/" "$ROOT/dist/gsa3-supabase/"
+sudo rsync -a --delete "$STAGE/client-supabase/dist/" "$ROOT/dist/client-supabase/"
+sudo rsync -a --delete "$STAGE/marketplace/dist/" "$ROOT/dist/marketplace/"
 printf 'release=%s\nbackup=%s\n' "${GITHUB_SHA:-manual}" "$BACKUP"
