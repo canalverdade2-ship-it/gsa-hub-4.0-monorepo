@@ -6,7 +6,7 @@ STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP="$ROOT/backups/releases/$STAMP-${GITHUB_SHA:-manual}"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
-mkdir -p "$BACKUP" "$ROOT/backups/releases"
+sudo mkdir -p "$BACKUP" "$ROOT/backups/releases"
 # Backup completo da versão atualmente publicada antes de qualquer alteração.
 sudo tar -czf "$BACKUP/current-release.tgz" -C "$ROOT" dist/gsa3-supabase -C /var/www/gsa-hub-staging .
 tar -xzf "$ARCHIVE" -C "$STAGE"
