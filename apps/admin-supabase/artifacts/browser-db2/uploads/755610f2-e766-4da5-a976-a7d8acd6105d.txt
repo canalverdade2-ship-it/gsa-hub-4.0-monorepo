@@ -1,1 +1,0 @@
-Anexo criado para validar upload e visualizacao no ticket.
