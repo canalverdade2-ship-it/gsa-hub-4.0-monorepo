@@ -8,7 +8,6 @@ import {
   Home as HomeIcon,
   LockKeyhole,
   LogIn,
-  Menu,
   Palette,
   ShoppingBag,
   X,
@@ -353,7 +352,6 @@ export function PublicHeader({
   onGuestStore,
   onClientLogin,
 }: PublicHeaderProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [clientAreaChooserOpen, setClientAreaChooserOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const clientAreaTriggerRef = useRef<HTMLButtonElement>(null);
@@ -383,12 +381,6 @@ export function PublicHeader({
     };
   }, [currentPage]);
 
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const closeMenu = () => setMobileMenuOpen(false);
-    window.addEventListener('resize', closeMenu);
-    return () => window.removeEventListener('resize', closeMenu);
-  }, [mobileMenuOpen]);
 
   useEffect(() => {
     if (!clientAreaChooserOpen) return;
@@ -428,8 +420,6 @@ export function PublicHeader({
   }, [clientAreaChooserOpen]);
 
   const handleLinkClick = (link: HeaderNavLink) => {
-    setMobileMenuOpen(false);
-
     if (link.id === 'marketplace') {
       if (onGuestStore) {
         onGuestStore();
@@ -489,13 +479,6 @@ export function PublicHeader({
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {currentPage === 'home' && (
-              <nav aria-label="Navegação da home" className="hidden items-center gap-6 text-sm font-semibold text-white/85 md:flex md:mr-5">
-                <a href="#gsa-navigator" className="rounded hover:text-[#d8bd73] focus-visible:ring-2 focus-visible:ring-[#d8bd73]">Soluções</a>
-                <a href="#sobre-gsa" className="rounded hover:text-[#d8bd73] focus-visible:ring-2 focus-visible:ring-[#d8bd73]">Sobre a GSA</a>
-                <a href="#contato-gsa" className="rounded hover:text-[#d8bd73] focus-visible:ring-2 focus-visible:ring-[#d8bd73]">Contato</a>
-              </nav>
-            )}
             <button
               ref={clientAreaTriggerRef}
               type="button"
@@ -505,7 +488,6 @@ export function PublicHeader({
                   return;
                 }
                 if (currentPage === 'home') {
-                  setMobileMenuOpen(false);
                   setClientAreaChooserOpen(true);
                   return;
                 }
@@ -517,18 +499,8 @@ export function PublicHeader({
               <LockKeyhole className="h-4 w-4 text-[#d8bd73]" />
               <span className="gsa-public-header-login-label">Área do Cliente</span>
             </button>
-            {currentPage === 'home' && (
-              <button type="button" aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={mobileMenuOpen} aria-controls="home-mobile-nav" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#d8bd73] focus-visible:ring-2 focus-visible:ring-[#d8bd73] md:hidden">
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-            )}
           </div>
         </div>
-        {currentPage === 'home' && mobileMenuOpen && (
-          <nav id="home-mobile-nav" aria-label="Navegação móvel da home" onKeyDown={(event) => { if (event.key === 'Escape') { setMobileMenuOpen(false); document.querySelector<HTMLButtonElement>('[aria-controls="home-mobile-nav"]')?.focus(); } }} className="mt-3 grid border-t border-white/10 bg-[#080c12] px-5 py-3 text-base text-white md:hidden">
-            {[['#gsa-navigator', 'Soluções'], ['#sobre-gsa', 'Sobre a GSA'], ['#contato-gsa', 'Contato']].map(([href, label]) => <a key={href} href={href} onClick={() => setMobileMenuOpen(false)} className="rounded px-3 py-3 hover:text-[#d8bd73] focus-visible:ring-2 focus-visible:ring-[#d8bd73]">{label}</a>)}
-          </nav>
-        )}
       </header>
       {clientAreaChooserOpen && (
         <div
