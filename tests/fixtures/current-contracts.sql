@@ -1761,3 +1761,402 @@ ALTER TABLE ONLY public.parceiros_resgates_recursos
 
 CREATE POLICY gsa_client_own_loja_solicitacoes_hardened ON public.loja_solicitacoes TO authenticated USING (((public.gsa_jwt_actor_type() = 'cliente'::text) AND (cliente_id = public.gsa_jwt_actor_id()))) WITH CHECK (((public.gsa_jwt_actor_type() = 'cliente'::text) AND (cliente_id = public.gsa_jwt_actor_id())));
 
+
+ gsa_admin_ajustar_saldo_cliente(uuid, text, uuid, text, numeric, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gsa_admin_ajustar_saldo_cliente(p_sessao_id uuid, p_session_token text, p_cliente_id uuid, p_tipo text, p_valor numeric, p_descricao text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_actor record;
+  v_cliente clientes%rowtype;
+  v_tipo text := coalesce(nullif(trim(p_tipo), ''), 'entrada');
+  v_valor numeric := round(coalesce(p_valor, 0), 2);
+  v_adjustment numeric;
+  v_novo_saldo numeric;
+  v_descricao text;
+BEGIN
+  IF v_valor <= 0 THEN
+    RAISE EXCEPTION 'Valor do ajuste deve ser maior que zero.';
+  END IF;
+
+  IF v_tipo NOT IN ('entrada', 'saida') THEN
+    RAISE EXCEPTION 'Tipo de ajuste invalido.';
+  END IF;
+
+  SELECT * INTO v_actor
+  FROM public.gsa_admin_session_actor(p_sessao_id, p_session_token)
+  LIMIT 1;
+
+  SELECT * INTO v_cliente
+  FROM public.clientes
+  WHERE id = p_cliente_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Cliente nao encontrado.';
+  END IF;
+
+  v_adjustment := CASE WHEN v_tipo = 'entrada' THEN v_valor ELSE -v_valor END;
+  v_novo_saldo := round(coalesce(v_cliente.saldo_carteira, 0) + v_adjustment, 2);
+  v_descricao := coalesce(nullif(trim(p_descricao), ''), 'Lancamento manual de ' || CASE WHEN v_tipo = 'entrada' THEN 'credito' ELSE 'debito' END) || ' [POR: ' || v_actor.ator_nome || ']';
+
+  UPDATE public.clientes
+     SET saldo_carteira = v_novo_saldo,
+         updated_at = now()
+   WHERE id = p_cliente_id;
+
+  INSERT INTO public.carteira_lancamentos(cliente_id, valor, tipo, descricao)
+  VALUES (
+    p_cliente_id,
+    v_valor,
+    CASE WHEN v_tipo = 'entrada' THEN 'credito' ELSE 'debito' END,
+    v_descricao
+  );
+
+  INSERT INTO public.extrato_financeiro(cliente_id, tipo, valor, descricao, saldo_resultante)
+  VALUES (
+    p_cliente_id,
+    v_tipo,
+    v_valor,
+    v_descricao,
+    v_novo_saldo
+  );
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'cliente_id', p_cliente_id,
+    'saldo_anterior', coalesce(v_cliente.saldo_carteira, 0),
+    'saldo_atual', v_novo_saldo,
+    'ajuste', v_adjustment
+  );
+END;
+$$;
+
+
+--
+-- Name: gsa_admin_alterar_status_cliente(uuid, text, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gsa_admin_alterar_status_cliente(p_sessao_id uuid, p_session_token text, p_cliente_id uuid, p_status text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_actor record;
+  v_status text := nullif(trim(coalesce(p_status, '')), '');
+BEGIN
+  IF v_status NOT IN ('ativo', 'inativo') THEN
+    RAISE EXCEPTION 'Status invalido.';
+  END IF;
+
+  SELECT * INTO v_actor
+  FROM public.gsa_admin_session_actor(p_sessao_id, p_session_token)
+  LIMIT 1;
+
+  IF NOT EXISTS (SELECT 1 FROM public.clientes WHERE id = p_cliente_id FOR UPDATE) THEN
+    RAISE EXCEPTION 'Cliente nao encontrado.';
+  END IF;
+
+  UPDATE public.clientes
+     SET status = v_status,
+         cadastro_aprovado = CASE WHEN v_status = 'ativo' THEN true ELSE cadastro_aprovado END,
+         updated_at = now()
+   WHERE id = p_cliente_id;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'cliente_id', p_cliente_id,
+    'status', v_status,
+    'patch', jsonb_build_object(
+      'status', v_status,
+      'cadastro_aprovado', CASE WHEN v_status = 'ativo' THEN true ELSE NULL END
+    ),
+    'ator_nome', v_actor.ator_nome
+  );
+END;
+$$;
+
+
+--
+-- Name: gsa_admin_baixar_fatura(uuid, text, uuid, text, timestamp with time zone, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gsa_admin_baixar_fatura(p_sessao_id uuid, p_session_token text, p_fatura_id uuid, p_metodo text DEFAULT 'manual'::text, p_data_pagamento timestamp with time zone DEFAULT now(), p_observacoes text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+  v_actor record;
+  v_fatura public.faturas%rowtype;
+  v_valor_pago numeric;
+  v_metodo text := coalesce(nullif(trim(p_metodo), ''), 'manual');
+  v_data_pagamento timestamptz := coalesce(p_data_pagamento, now());
+  v_finalizacao jsonb;
+BEGIN
+  PERFORM set_config('my.app.bypass_saldo_check', 'on', true);
+  PERFORM set_config('gsa.credit_release', 'on', true);
+
+  SELECT * INTO v_actor
+  FROM public.gsa_admin_session_actor(p_sessao_id, p_session_token)
+  LIMIT 1;
+
+  SELECT * INTO v_fatura
+  FROM public.faturas
+  WHERE id = p_fatura_id
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Fatura nao encontrada.'; END IF;
+  IF v_fatura.status = 'cancelado' THEN RAISE EXCEPTION 'Fatura cancelada nao pode receber baixa.'; END IF;
+
+  v_valor_pago := round(coalesce(v_fatura.valor_final_pendente, v_fatura.valor_total, 0), 2);
+  IF v_valor_pago <= 0 THEN v_valor_pago := round(coalesce(v_fatura.valor_total, 0), 2); END IF;
+
+  IF v_fatura.status = 'pago' THEN
+    v_finalizacao := public.gsa_finalize_paid_invoice_internal(
+      p_fatura_id,
+      CASE WHEN coalesce(v_fatura.pontos_gerados, false) THEN 0 ELSE v_valor_pago END
+    );
+    RETURN jsonb_build_object(
+      'success', true, 'already_processed', true, 'fatura_id', p_fatura_id,
+      'status', 'pago', 'valor_pago', coalesce(v_fatura.valor_pago, v_valor_pago),
+      'finalizacao', v_finalizacao
+    );
+  END IF;
+
+  UPDATE public.faturas
+     SET status = 'pago',
+         data_pagamento = v_data_pagamento,
+         forma_pagamento_escolhida = v_metodo,
+         data_escolha_pagamento = v_data_pagamento,
+         observacoes = coalesce(nullif(trim(p_observacoes), ''), observacoes),
+         valor_pago = round(coalesce(valor_pago, 0) + v_valor_pago, 2),
+         valor_final_pendente = 0
+   WHERE id = p_fatura_id;
+
+  INSERT INTO public.pagamentos(fatura_id, metodo, valor, data_pagamento)
+  VALUES (p_fatura_id, v_metodo, v_valor_pago, v_data_pagamento);
+
+  v_finalizacao := public.gsa_finalize_paid_invoice_internal(p_fatura_id, v_valor_pago);
+
+  RETURN jsonb_build_object(
+    'success', true, 'already_processed', false, 'fatura_id', p_fatura_id,
+    'status', 'pago', 'valor_pago', v_valor_pago, 'metodo', v_metodo,
+    'ator_tipo', v_actor.ator_tipo, 'ator_nome', v_actor.ator_nome,
+    'finalizacao', v_finalizacao
+  );
+END;
+$$;
+
+
+--
+-- Name: gsa_admin_save_partner(uuid, text, uuid, jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gsa_admin_save_partner(p_sessao_id uuid DEFAULT NULL::uuid, p_session_token text DEFAULT NULL::text, p_partner_id uuid DEFAULT NULL::uuid, p_payload jsonb DEFAULT '{}'::jsonb) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_id uuid := p_partner_id;
+  v_payload_id text := trim(COALESCE(p_payload ->> 'id', ''));
+  v_name text := trim(COALESCE(p_payload ->> 'name', ''));
+  v_slug text := lower(trim(COALESCE(p_payload ->> 'slug', '')));
+  v_category text := trim(COALESCE(p_payload ->> 'category', ''));
+  v_short_description text := trim(COALESCE(p_payload ->> 'short_description', ''));
+  v_description text := trim(COALESCE(p_payload ->> 'description', ''));
+  v_status text := lower(trim(COALESCE(p_payload ->> 'status', 'ativo')));
+  v_service_mode text := lower(trim(COALESCE(p_payload ->> 'service_mode', 'hibrido')));
+  v_partner jsonb;
+BEGIN
+  PERFORM public.gsa_admin_validate_context(p_sessao_id, p_session_token);
+  PERFORM public.gsa_admin_assert_module('parceiros');
+
+  IF v_id IS NULL AND v_payload_id <> '' THEN
+    BEGIN
+      v_id := v_payload_id::uuid;
+    EXCEPTION WHEN invalid_text_representation THEN
+      v_id := NULL;
+    END;
+  END IF;
+
+  IF length(v_name) < 2 THEN
+    RAISE EXCEPTION 'Informe um nome válido para o parceiro.' USING ERRCODE = '22023';
+  END IF;
+
+  IF v_slug = '' THEN
+    v_slug := lower(regexp_replace(v_name, '[^a-zA-Z0-9]+', '-', 'g'));
+    v_slug := trim(both '-' from v_slug);
+  END IF;
+
+  IF v_id IS NULL THEN
+    SELECT id INTO v_id FROM public.parceiros WHERE slug = v_slug LIMIT 1;
+  END IF;
+
+  IF v_category = '' THEN
+    v_category := 'Geral';
+  END IF;
+
+  IF v_short_description = '' THEN
+    v_short_description := COALESCE(nullif(v_description, ''), nullif(trim(COALESCE(p_payload ->> 'benefits', '')), ''), v_name);
+  END IF;
+
+  IF v_status NOT IN ('em_analise', 'ativo', 'inativo', 'encerrado', 'excluido') THEN
+    v_status := 'ativo';
+  END IF;
+
+  IF v_id IS NULL THEN
+    INSERT INTO public.parceiros (
+      slug, name, legal_name, category, short_description, description,
+      logo_url, cover_url, phone, whatsapp, email, website, instagram,
+      facebook, linkedin, street, number, complement, neighborhood, city,
+      state, zip_code, maps_url, business_hours, service_mode,
+      service_regions, services, products, benefits, contact_person,
+      internal_notes, featured, display_order, status,
+      redemption_has_coupon, redemption_coupon_code,
+      redemption_has_voucher, redemption_has_link,
+      redemption_link, redemption_auto_redirect, redemption_instructions,
+      redemption_delay_24h
+    ) VALUES (
+      v_slug,
+      v_name,
+      nullif(trim(COALESCE(p_payload ->> 'legal_name', '')), ''),
+      v_category,
+      COALESCE(v_short_description, ''),
+      nullif(v_description, ''),
+      nullif(trim(COALESCE(p_payload ->> 'logo_url', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'cover_url', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'phone', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'whatsapp', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'email', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'website', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'instagram', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'facebook', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'linkedin', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'street', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'number', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'complement', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'neighborhood', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'city', '')), ''),
+      nullif(upper(trim(COALESCE(p_payload ->> 'state', ''))), ''),
+      nullif(trim(COALESCE(p_payload ->> 'zip_code', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'maps_url', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'business_hours', '')), ''),
+      v_service_mode,
+      COALESCE(ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_payload -> 'service_regions', '[]'::jsonb))), '{}'::text[]),
+      COALESCE(ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_payload -> 'services', '[]'::jsonb))), '{}'::text[]),
+      COALESCE(ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_payload -> 'products', '[]'::jsonb))), '{}'::text[]),
+      nullif(trim(COALESCE(p_payload ->> 'benefits', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'contact_person', '')), ''),
+      nullif(trim(COALESCE(p_payload ->> 'internal_notes', '')), ''),
+      COALESCE((p_payload ->> 'featured')::boolean, false),
+      COALESCE((p_payload ->> 'display_order')::integer, 0),
+      v_status,
+      COALESCE((p_payload ->> 'redemption_has_coupon')::boolean, false),
+      nullif(trim(COALESCE(p_payload ->> 'redemption_coupon_code', '')), ''),
+      COALESCE((p_payload ->> 'redemption_has_voucher')::boolean, false),
+      COALESCE((p_payload ->> 'redemption_has_link')::boolean, false),
+      nullif(trim(COALESCE(p_payload ->> 'redemption_link', '')), ''),
+      COALESCE((p_payload ->> 'redemption_auto_redirect')::boolean, false),
+      nullif(trim(COALESCE(p_payload ->> 'redemption_instructions', '')), ''),
+      COALESCE((p_payload ->> 'redemption_delay_24h')::boolean, false)
+    )
+    RETURNING id INTO v_id;
+  ELSE
+    UPDATE public.parceiros
+       SET slug = v_slug,
+           name = v_name,
+           legal_name = nullif(trim(COALESCE(p_payload ->> 'legal_name', '')), ''),
+           category = v_category,
+           short_description = COALESCE(v_short_description, ''),
+           description = nullif(v_description, ''),
+           logo_url = nullif(trim(COALESCE(p_payload ->> 'logo_url', '')), ''),
+           cover_url = nullif(trim(COALESCE(p_payload ->> 'cover_url', '')), ''),
+           phone = nullif(trim(COALESCE(p_payload ->> 'phone', '')), ''),
+           whatsapp = nullif(trim(COALESCE(p_payload ->> 'whatsapp', '')), ''),
+           email = nullif(trim(COALESCE(p_payload ->> 'email', '')), ''),
+           website = nullif(trim(COALESCE(p_payload ->> 'website', '')), ''),
+           instagram = nullif(trim(COALESCE(p_payload ->> 'instagram', '')), ''),
+           facebook = nullif(trim(COALESCE(p_payload ->> 'facebook', '')), ''),
+           linkedin = nullif(trim(COALESCE(p_payload ->> 'linkedin', '')), ''),
+           street = nullif(trim(COALESCE(p_payload ->> 'street', '')), ''),
+           number = nullif(trim(COALESCE(p_payload ->> 'number', '')), ''),
+           complement = nullif(trim(COALESCE(p_payload ->> 'complement', '')), ''),
+           neighborhood = nullif(trim(COALESCE(p_payload ->> 'neighborhood', '')), ''),
+           city = nullif(trim(COALESCE(p_payload ->> 'city', '')), ''),
+           state = nullif(upper(trim(COALESCE(p_payload ->> 'state', ''))), ''),
+           zip_code = nullif(trim(COALESCE(p_payload ->> 'zip_code', '')), ''),
+           maps_url = nullif(trim(COALESCE(p_payload ->> 'maps_url', '')), ''),
+           business_hours = nullif(trim(COALESCE(p_payload ->> 'business_hours', '')), ''),
+           service_mode = v_service_mode,
+           service_regions = COALESCE(ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_payload -> 'service_regions', '[]'::jsonb))), '{}'::text[]),
+           services = COALESCE(ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_payload -> 'services', '[]'::jsonb))), '{}'::text[]),
+           products = COALESCE(ARRAY(SELECT jsonb_array_elements_text(COALESCE(p_payload -> 'products', '[]'::jsonb))), '{}'::text[]),
+           benefits = nullif(trim(COALESCE(p_payload ->> 'benefits', '')), ''),
+           contact_person = nullif(trim(COALESCE(p_payload ->> 'contact_person', '')), ''),
+           internal_notes = nullif(trim(COALESCE(p_payload ->> 'internal_notes', '')), ''),
+           featured = COALESCE((p_payload ->> 'featured')::boolean, featured),
+           display_order = COALESCE((p_payload ->> 'display_order')::integer, display_order),
+           status = v_status,
+           redemption_has_coupon = COALESCE((p_payload ->> 'redemption_has_coupon')::boolean, false),
+           redemption_coupon_code = nullif(trim(COALESCE(p_payload ->> 'redemption_coupon_code', '')) , ''),
+           redemption_has_voucher = COALESCE((p_payload ->> 'redemption_has_voucher')::boolean, false),
+           redemption_has_link = COALESCE((p_payload ->> 'redemption_has_link')::boolean, false),
+           redemption_link = nullif(trim(COALESCE(p_payload ->> 'redemption_link', '')) , ''),
+           redemption_auto_redirect = COALESCE((p_payload ->> 'redemption_auto_redirect')::boolean, false),
+           redemption_instructions = nullif(trim(COALESCE(p_payload ->> 'redemption_instructions', '')) , ''),
+           redemption_delay_24h = COALESCE((p_payload ->> 'redemption_delay_24h')::boolean, false),
+           updated_at = now()
+     WHERE id = v_id;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Parceiro não encontrado.' USING ERRCODE = 'P0002';
+    END IF;
+  END IF;
+
+  SELECT to_jsonb(p)
+    INTO v_partner
+    FROM public.parceiros p
+   WHERE p.id = v_id;
+
+  RETURN jsonb_build_object('success', true, 'partner', v_partner);
+END;
+$$;
+
+
+--
+-- Name: gsa_admin_set_partner_status(uuid, text, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gsa_admin_set_partner_status(p_sessao_id uuid DEFAULT NULL::uuid, p_session_token text DEFAULT NULL::text, p_partner_id uuid DEFAULT NULL::uuid, p_status text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public', 'pg_temp'
+    AS $$
+DECLARE
+  v_status text := lower(trim(COALESCE(p_status, '')));
+BEGIN
+  PERFORM public.gsa_admin_validate_context(p_sessao_id, p_session_token);
+  PERFORM public.gsa_admin_assert_module('parceiros');
+
+  IF v_status NOT IN ('em_analise', 'ativo', 'inativo', 'encerrado', 'excluido') THEN
+    RAISE EXCEPTION 'Status do parceiro inválido.' USING ERRCODE = '22023';
+  END IF;
+
+  UPDATE public.parceiros SET status = v_status WHERE id = p_partner_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Parceiro não encontrado.' USING ERRCODE = 'P0002';
+  END IF;
+
+  PERFORM public.gsa_admin_write_audit(
+    'parceiros',
+    'ALTERAR_STATUS_PARCEIRO',
+    'parceiros',
+    p_partner_id,
+    jsonb_build_object('status', v_status)
+  );
+
+  RETURN jsonb_build_object('success', true, 'id', p_partner_id, 'status', v_status);
+END;
+$$;
+

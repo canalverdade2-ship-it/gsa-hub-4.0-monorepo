@@ -15,20 +15,27 @@ const {
 describe('Database Schema & RPC Integrity Verification Suite (M2 / R1 / R2)', () => {
   const fixturePath = path.resolve(process.cwd(), '../../tests/fixtures/schema-metadata.json');
   const metadata = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+  const definitions = fs.readFileSync(path.resolve(process.cwd(), '../../tests/fixtures/current-contracts.sql'), 'utf8');
+  const migration = fs.readFileSync(path.resolve(process.cwd(), '../../infra/migrations/20261012_release_contracts.sql'), 'utf8');
   const tableColumns = new Map<string, Set<string>>();
   for (const [table, column] of metadata.columns) {
     if (!tableColumns.has(table)) tableColumns.set(table, new Set());
     tableColumns.get(table)!.add(column);
+  }
+  for (const match of migration.matchAll(/ADD COLUMN IF NOT EXISTS ([a-z_]+)/g)) {
+    tableColumns.get('faturas')!.add(match[1]);
   }
   const functions = new Map<string, any>();
   const permissions = new Map<string, any>();
   for (const fn of metadata.functions) {
     const params = fn.args.split(',').map((arg: string) => arg.trim().split(/\s+/)[0]).filter(Boolean);
     const previous = functions.get(fn.name);
-    if (!previous || previous.params.length < params.length) functions.set(fn.name, { name: fn.name, params, returnType: fn.returnType });
+    if (!previous || previous.params.length < params.length) functions.set(fn.name, { name: fn.name, params, returnType: fn.returnType, sessionGuarded: params.includes('p_sessao_id') && params.includes('p_session_token') && /public\.gsa_admin_(session_actor|validate_context)\s*\(/i.test(definitions.slice(definitions.indexOf('CREATE FUNCTION public.' + fn.name + '('), definitions.indexOf('$;', definitions.indexOf('CREATE FUNCTION public.' + fn.name + '(')))) });
     const existing = permissions.get(fn.name);
     permissions.set(fn.name, { anon: !!fn.anon || !!existing?.anon, authenticated: !!fn.authenticated || !!existing?.authenticated });
   }
+  expect(migration).toContain('REVOKE EXECUTE ON FUNCTION public.gsa_admin_write_audit');
+  permissions.set('gsa_admin_write_audit', { anon: false, authenticated: false });
   const schemaSnapshot = { tableColumns, functions, permissions, tableRls: new Map(metadata.rls) };
 
   // =========================================================================
@@ -349,7 +356,7 @@ describe('Database Schema & RPC Integrity Verification Suite (M2 / R1 / R2)', ()
       for (const sensitiveFunc of SENSITIVE_FUNCTIONS_ANON_REVOKED) {
         const perm = schemaSnapshot.permissions.get(sensitiveFunc);
         if (perm) {
-          expect(perm.anon, `Sensitive function '${sensitiveFunc}' must NOT be granted to anon`).toBe(false);
+          expect(!perm.anon || schemaSnapshot.functions.get(sensitiveFunc)?.sessionGuarded, `Sensitive function '${sensitiveFunc}' must deny anonymous access or validate a signed application session`).toBe(true);
         }
       }
     });

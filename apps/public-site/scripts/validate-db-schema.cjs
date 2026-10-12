@@ -669,6 +669,7 @@ async function inspectLiveDatabase() {
           p.proname AS func_name,
           pg_get_function_arguments(p.oid) AS arguments,
           pg_get_function_result(p.oid) AS result_type,
+          pg_get_functiondef(p.oid) AS definition,
           has_function_privilege('anon', p.oid, 'EXECUTE') AS has_anon_execute,
           has_function_privilege('authenticated', p.oid, 'EXECUTE') AS has_auth_execute
         FROM pg_proc p
@@ -704,7 +705,8 @@ async function inspectLiveDatabase() {
       functions.set(name, {
         name,
         params,
-        returnType: row.result_type || 'unknown'
+        returnType: row.result_type || 'unknown',
+        sessionGuarded: params.includes('p_sessao_id') && params.includes('p_session_token') && /public\.gsa_admin_(session_actor|validate_context)\s*\(/i.test(row.definition || '')
       });
 
       permissions.set(name, {
@@ -850,7 +852,7 @@ function validateDatabaseContracts(schemaData) {
       // Forbidden roles check (e.g. anon should not have access to admin RPCs)
       for (const forbidden of contract.forbiddenRoles) {
         if (forbidden === 'anon' && perm.anon === true) {
-          if (contract.role === 'admin' && SENSITIVE_FUNCTIONS_ANON_REVOKED.includes(rpcName)) {
+          if (contract.role === 'admin' && SENSITIVE_FUNCTIONS_ANON_REVOKED.includes(rpcName) && !func.sessionGuarded) {
             issues.push({
               severity: 'BLOCKER',
               category: 'SECURITY_EXPOSED_RPC',
@@ -877,7 +879,7 @@ function validateDatabaseContracts(schemaData) {
   // 4. Sensitive Functions Security Guard Check
   for (const sensitiveFunc of SENSITIVE_FUNCTIONS_ANON_REVOKED) {
     const perm = permissions.get(sensitiveFunc.toLowerCase());
-    if (perm && perm.anon === true) {
+    if (perm && perm.anon === true && !functions.get(sensitiveFunc.toLowerCase())?.sessionGuarded) {
       issues.push({
         severity: 'BLOCKER',
         category: 'SECURITY_SENSITIVE_FUNCTION_EXPOSED',

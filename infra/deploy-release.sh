@@ -48,6 +48,7 @@ sudo tar -czf "$BACKUP/storage.tgz" -C /var/lib/gsa-storage .
 sudo tar -tzf "$BACKUP/storage.tgz" >/dev/null
 sudo tar -tzf "$BACKUP/configuration.tgz" >/dev/null
 sudo sh -c 'cd "$1" && sha256sum database.dump storage.tgz configuration.tgz > SHA256SUMS && sha256sum -c SHA256SUMS' sh "$BACKUP"
+sudo env PGPASSFILE=/etc/gsa-backup/pgpass psql -h 127.0.0.1 -p 5433 -U supabase_admin -d gsahub --single-transaction --set=ON_ERROR_STOP=1 -f infra/migrations/20261012_release_contracts.sql
 publishing=1
 sudo rsync -a --delete "$STAGE/public-site/dist/" /var/www/gsa-hub-staging/
 sudo rsync -a --delete "$STAGE/admin-supabase/dist/" "$ROOT/dist/gsa3-supabase/"

@@ -30,6 +30,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: node scripts/configure-build.mjs
+      - name: Validate additive release migration
+        run: pnpm --dir apps/admin-supabase exec node scripts/test-release-migration.mjs
       - run: pnpm build:all
       - run: pnpm test:all
       - run: pnpm lint:all
