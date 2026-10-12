@@ -1,0 +1,21 @@
+name: Inspect deployment infrastructure
+on:
+  push:
+    paths: [.github/workflows/inspect-deploy.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read deployment paths
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/vps_key "$VPS_USER@$VPS_HOST" 'sudo nginx -T 2>&1 | grep -E "^# configuration file|server_name|listen |location |root |alias |include "; sudo docker ps --format "{{.Names}}"; sudo docker inspect supabase-db supabase-storage --format "{{.Name}} {{json .Mounts}}"'
