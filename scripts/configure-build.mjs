@@ -1,0 +1,11 @@
+import { readFileSync, appendFileSync } from 'node:fs';
+const source = readFileSync('apps/marketplace/src/lib/supabase.ts', 'utf8');
+const fallback = name => source.match(new RegExp("export const " + name + " = '([^']+)'"))?.[1];
+const url = process.env.VITE_SUPABASE_URL || fallback('SUPABASE_URL_FALLBACK');
+const key = process.env.VITE_SUPABASE_ANON_KEY || fallback('SUPABASE_ANON_KEY_FALLBACK');
+if (!url || !key || new URL(url).protocol !== 'https:') throw new Error('Configure the public Supabase connection.');
+const payload = JSON.parse(Buffer.from(key.split('.')[1], 'base64url'));
+if (payload.role !== 'anon') throw new Error('Only an anon key may be used in browser builds.');
+if ([url, key].some(value => /[\r\n]/.test(value))) throw new Error('Invalid environment value.');
+appendFileSync(process.env.GITHUB_ENV, 'VITE_SUPABASE_URL=' + url + '\nVITE_SUPABASE_ANON_KEY=' + key + '\n');
+console.log('Public Supabase build configuration validated.');

@@ -142,6 +142,7 @@ function gsaTvStreamPlugin() {
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
+    base: mode === 'production' ? '/marketplace/' : '/',
     plugins: [react(), tailwindcss(), gsaTvStreamPlugin()],
     define: {
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),

@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: production-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -22,9 +22,14 @@ jobs:
           version: 10.15.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Configure public Supabase connection
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: node scripts/configure-build.mjs
       - run: pnpm build:all
       - run: pnpm test:all
       - run: pnpm lint:all
@@ -48,4 +53,4 @@ jobs:
           chmod 600 ~/.ssh/vps_key
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
           scp -i ~/.ssh/vps_key gsa-hub-release.tgz "$VPS_USER@$VPS_HOST:/tmp/gsa-hub-release-${GITHUB_SHA}.tgz"
-          ssh -i ~/.ssh/vps_key "$VPS_USER@$VPS_HOST" "cd /var/www/gsa-hub/source && GIT_SSH_COMMAND='ssh -i ~/.ssh/gsa_hub_github -o IdentitiesOnly=yes' git pull --ff-only origin main && bash infra/deploy-release.sh /tmp/gsa-hub-release-${GITHUB_SHA}.tgz && rm -f /tmp/gsa-hub-release-${GITHUB_SHA}.tgz"
+          ssh -i ~/.ssh/vps_key "$VPS_USER@$VPS_HOST" "cd /var/www/gsa-hub/source && GIT_SSH_COMMAND='ssh -i ~/.ssh/gsa_hub_github -o IdentitiesOnly=yes' git fetch origin main && git checkout --detach ${GITHUB_SHA} && GITHUB_SHA=${GITHUB_SHA} bash infra/deploy-release.sh /tmp/gsa-hub-release-${GITHUB_SHA}.tgz && rm -f /tmp/gsa-hub-release-${GITHUB_SHA}.tgz"
