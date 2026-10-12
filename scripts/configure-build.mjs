@@ -1,6 +1,6 @@
 import { readFileSync, appendFileSync } from 'node:fs';
 const source = readFileSync('apps/marketplace/src/lib/supabase.ts', 'utf8');
-const fallback = name => source.match(new RegExp("export const " + name + " = '([^']+)'"))?.[1];
+const fallback = name => source.match(new RegExp("export const " + name + "\\s*=\\s*'([^']+)'"))?.[1];
 const url = process.env.VITE_SUPABASE_URL || fallback('SUPABASE_URL_FALLBACK');
 const key = process.env.VITE_SUPABASE_ANON_KEY || fallback('SUPABASE_ANON_KEY_FALLBACK');
 if (!url || !key || new URL(url).protocol !== 'https:') throw new Error('Configure the public Supabase connection.');
