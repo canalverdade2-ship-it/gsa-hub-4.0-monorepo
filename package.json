@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.15.0",
   "scripts": {
     "build:all": "pnpm -r build",
-    "test:all": "pnpm -r --if-present test && pnpm --dir apps/public-site test:unit && pnpm --dir apps/marketplace test:unit",
+    "test:all": "node scripts/test-all.mjs",
     "lint:all": "pnpm -r --if-present lint",
     "audit:all": "node scripts/audit-monorepo.mjs && pnpm audit --prod --audit-level high",
     "audit:monorepo": "node scripts/audit-monorepo.mjs"

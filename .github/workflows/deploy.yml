@@ -33,7 +33,9 @@ jobs:
       - run: pnpm build:all
       - run: pnpm test:all
       - run: pnpm lint:all
+        if: ${{ !cancelled() }}
       - run: pnpm audit:all
+        if: ${{ !cancelled() }}
       - name: Prepare validated release bundle
         run: |
           mkdir -p release-bundle/public-site release-bundle/admin-supabase release-bundle/client-supabase release-bundle/marketplace
