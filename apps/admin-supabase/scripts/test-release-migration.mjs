@@ -19,7 +19,7 @@ await db.exec(`
     owner_id uuid
   );
   CREATE FUNCTION storage.foldername(text)
-  RETURNS text[] LANGUAGE sql IMMUTABLE AS 'SELECT string_to_array(\\$1, ''/'')';
+  RETURNS text[] LANGUAGE sql IMMUTABLE AS 'SELECT string_to_array($1, ''/'')';
   CREATE TABLE public.faturas (id uuid PRIMARY KEY);
   CREATE FUNCTION public.gsa_admin_write_audit(text,text,text,uuid,jsonb)
   RETURNS uuid LANGUAGE sql AS 'SELECT NULL::uuid';
