@@ -52,6 +52,7 @@ import {
 describe('Empirical Adversarial Stress Suite: Partner Redemption, 24h SLA & WhatsApp Engine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFunctionsInvoke.mockReset();
     global.fetch = vi.fn() as any;
   });
 
@@ -472,7 +473,7 @@ describe('Empirical Adversarial Stress Suite: Partner Redemption, 24h SLA & What
         return { ok: false };
       });
 
-      mockFunctionsInvoke.mockResolvedValueOnce({
+      mockFunctionsInvoke.mockResolvedValue({
         data: { success: true, messageId: 'edge-001' },
         error: null,
       });

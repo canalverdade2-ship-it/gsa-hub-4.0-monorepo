@@ -220,7 +220,7 @@ describe('EMPIRICAL CHALLENGER 1: Adversarial Business Logic Stress Test Suite',
       for (const amount of [0.009,0.30000000000000004]) {
         vi.clearAllMocks();
         mockCallClientRpc.mockResolvedValueOnce({ total: amount });
-        mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
+        mockInvoke.mockResolvedValue({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
         const result = await createInfinitePayOrderCheckout({
           orcamentoId: 'order-contract', codigoOrcamento: 'ORDER', clienteId: 'client',
           valorLiquido: 999999, clienteNome: '<untrusted>', clienteEmail: 'untrusted@example.test',
@@ -242,7 +242,7 @@ describe('EMPIRICAL CHALLENGER 1: Adversarial Business Logic Stress Test Suite',
       for (const amount of [1000000,99999999.99]) {
         vi.clearAllMocks();
         mockCallClientRpc.mockResolvedValueOnce({ total: amount });
-        mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
+        mockInvoke.mockResolvedValue({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
         const result = await createInfinitePayOrderCheckout({
           orcamentoId: 'order-contract', codigoOrcamento: 'ORDER', clienteId: 'client',
           valorLiquido: 999999, clienteNome: '<untrusted>', clienteEmail: 'untrusted@example.test',
@@ -264,7 +264,7 @@ describe('EMPIRICAL CHALLENGER 1: Adversarial Business Logic Stress Test Suite',
       for (const amount of [50]) {
         vi.clearAllMocks();
         mockCallClientRpc.mockResolvedValueOnce({ total: amount });
-        mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
+        mockInvoke.mockResolvedValue({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
         const result = await createInfinitePayOrderCheckout({
           orcamentoId: 'order-contract', codigoOrcamento: 'ORDER', clienteId: 'client',
           valorLiquido: 999999, clienteNome: '<untrusted>', clienteEmail: 'untrusted@example.test',

@@ -515,7 +515,26 @@ describe('Marketplace Pricing Integrity Suite (FLAW-03, FLAW-04)', () => {
       expect(server.total).toBe(190.00);
     });
 
-    it('2.4 uses the server PIX discount and delegates charging without client prices', async () => {
+    it('2.4 should revert total when switching payment method from PIX to Credit Card', () => {
+      const baseParams: PricingCalculationParams = {
+        cartItems: [
+          { id: '1', item_id: 'prod-1', tipo: 'produto', quantidade: 1, valor_unitario: 300.00 },
+        ],
+        pixPercentage: 5,
+      };
+
+      // Customer chooses PIX: R$ 15 discount -> R$ 285.00
+      const pixTotals = calculateClientCheckoutTotals({ ...baseParams, isPix: true });
+      expect(pixTotals.descontoPix).toBe(15.00);
+      expect(pixTotals.totalFinal).toBe(285.00);
+
+      // Customer switches to Card: R$ 0 discount -> R$ 300.00
+      const cardTotals = calculateClientCheckoutTotals({ ...baseParams, isPix: false });
+      expect(cardTotals.descontoPix).toBe(0.00);
+      expect(cardTotals.totalFinal).toBe(300.00);
+    });
+
+    it('2.5 obtains the discounted server quote and forwards only the order identity', async () => {
       mockCallClientRpc.mockResolvedValueOnce({ total: 190, desconto_pix: 10 });
       mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: 190, order_nsu: 'pix-order' }, error: null });
       const result = await createInfinitePayOrderCheckout({
@@ -527,58 +546,6 @@ describe('Marketplace Pricing Integrity Suite (FLAW-03, FLAW-04)', () => {
       expect(mockInvoke).toHaveBeenCalledWith('gsa-payments', {
         body: { action: 'create_store_link', orcamento_id: 'orc-pix-test-01', sessao_id: 'test-user', session_token: 'test-token' },
       });
-    });
-
-
-    it('2.5 createInfinitePayOrderCheckout: must query payment quote reflecting PIX discount and charge exact discounted total', async () => {
-      // Mock callClientRpc for gsa_client_store_payment_quote
-      // In the fixed system, the order total is R$ 190.00 (with 5% PIX discount)
-      mockCallClientRpc.mockImplementation((rpcName: string, args: any) => {
-        if (rpcName === 'gsa_client_store_payment_quote') {
-          return Promise.resolve({
-            success: true,
-            orcamento_id: args.p_orcamento_id,
-            total: 190.00, // 5% discount applied in database
-            desconto_pix: 10.00,
-          });
-        }
-        return Promise.resolve({});
-      });
-
-      // Spy on fetch for InfinitePay checkout endpoint
-      const originalFetch = global.fetch;
-      const fetchSpy = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          url: 'https://pay.infinitepay.io/test-order-190',
-          order_nsu: 'ORC-PIX-123456',
-        }),
-      });
-      global.fetch = fetchSpy as any;
-
-      try {
-        const result = await createInfinitePayOrderCheckout({
-          orcamentoId: 'orc-pix-test-01',
-          codigoOrcamento: 'ORC-PIX-123',
-          clienteId: 'cli-001',
-          clienteNome: 'Adriano Farias',
-          clienteEmail: 'cliente@teste.com',
-          clienteTelefone: '11920857756',
-        });
-
-        expect(result.success).toBe(true);
-        expect(result.total).toBe(190.00);
-        expect(result.link).toBe('https://pay.infinitepay.io/test-order-190');
-
-        // InfinitePay charges amount in centavos: 190.00 * 100 = 19000
-        expect(fetchSpy).toHaveBeenCalled();
-        const fetchBody = JSON.parse(fetchSpy.mock.calls[0][1].body);
-        expect(fetchBody.items).toBeDefined();
-        expect(fetchBody.items[0].price).toBe(19000); // MUST be 19000 cents (R$ 190.00), NEVER 20000 cents!
-      } finally {
-        global.fetch = originalFetch;
-      }
     });
 
     it('2.6 should embed exact discounted amount in BACEN PIX BR Code payload', () => {

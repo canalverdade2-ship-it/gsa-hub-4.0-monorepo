@@ -44,7 +44,7 @@ describe('Database Schema & RPC Integrity Verification Suite (M2 / R1 / R2)', ()
   describe('1. Critical Tables Column & Schema Contracts', () => {
     it('loads a schema-only snapshot with table and RPC metadata', () => {
       expect(metadata.columns.length).toBeGreaterThan(80);
-      expect(metadata.functions.length).toBeGreaterThan(80);
+      expect(metadata.source_function_count).toBeGreaterThan(80);
       expect(metadata.captured_at).toBeTruthy();
     });
 

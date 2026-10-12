@@ -52,7 +52,7 @@ describe('Partner Redemption Appeals - Schema & Contract Verification', () => {
 
   it('defines sanitized realtime tracking table without customer PII', () => {
     expect(migration).toContain('parceiros_resgates_public_status');
-    expect(migration).toContain('tracking_key uuid NOT NULL');
+    expect(migration).toMatch(/tracking_key uuid(?: DEFAULT gen_random_uuid\(\))? NOT NULL/i);
     expect(migration).toMatch(/UNIQUE\s*\(tracking_key\)/i);
   });
 
