@@ -19,8 +19,18 @@ jobs:
           chmod 600 ~/.ssh/vps_key
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/vps_key "$VPS_USER@$VPS_HOST" 'sudo env PGPASSFILE=/etc/gsa-backup/pgpass pg_dump -h 127.0.0.1 -p 5433 -U supabase_admin -d gsahub --schema-only --schema=public --no-owner --no-acl' > schema.sql
+          ssh -i ~/.ssh/vps_key "$VPS_USER@$VPS_HOST" 'sudo env PGPASSFILE=/etc/gsa-backup/pgpass psql -h 127.0.0.1 -p 5433 -U supabase_admin -d gsahub -At' <<'SQL' > metadata.json
+          SELECT json_build_object(
+            'captured_at', now(),
+            'columns', (SELECT json_agg(json_build_array(table_name,column_name)) FROM information_schema.columns WHERE table_schema='public'),
+            'rls', (SELECT json_agg(json_build_array(relname,relrowsecurity)) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p')),
+            'functions', (SELECT json_agg(json_build_object('name',proname,'args',pg_get_function_arguments(p.oid),'returnType',pg_get_function_result(p.oid),'anon',has_function_privilege('anon',p.oid,'EXECUTE'),'authenticated',has_function_privilege('authenticated',p.oid,'EXECUTE'))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public')
+          );
+          SQL
       - uses: actions/upload-artifact@v4
         with:
           name: schema-only
-          path: schema.sql
+          path: |
+            schema.sql
+            metadata.json
           retention-days: 1
