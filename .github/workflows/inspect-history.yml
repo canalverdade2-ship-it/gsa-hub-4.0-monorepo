@@ -18,4 +18,9 @@ jobs:
           printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/vps_key
           chmod 600 ~/.ssh/vps_key
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/vps_key "$VPS_USER@$VPS_HOST" 'sudo env PGPASSFILE=/etc/gsa-backup/pgpass psql -h 127.0.0.1 -p 5433 -U supabase_admin -d gsahub -Atc "SELECT count(*), min(version), max(version) FROM supabase_migrations.schema_migrations; SELECT version,name FROM supabase_migrations.schema_migrations ORDER BY version DESC LIMIT 15;"'
+          ssh -i ~/.ssh/vps_key "$VPS_USER@$VPS_HOST" 'sudo env PGPASSFILE=/etc/gsa-backup/pgpass pg_dump -h 127.0.0.1 -p 5433 -U supabase_admin -d gsahub --schema-only --schema=public --no-owner --no-acl' > schema.sql
+      - uses: actions/upload-artifact@v4
+        with:
+          name: schema-only
+          path: schema.sql
+          retention-days: 1
