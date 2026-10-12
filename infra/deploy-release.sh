@@ -9,7 +9,7 @@ STAGE="$(mktemp -d)"
 publishing=0
 cleanup() { rm -rf "$STAGE"; }
 trap cleanup EXIT
-tar -xzf "$ARCHIVE" -C "$STAGE"
+tar --extract --gzip --same-permissions -f "$ARCHIVE" -C "$STAGE"
 for app in public-site admin-supabase client-supabase marketplace; do
   test -s "$STAGE/$app/dist/index.html"
 done
@@ -61,6 +61,7 @@ base="https://api.147-15-43-141.nip.io"
 apps=(public-site admin-supabase client-supabase marketplace)
 mounts=("" gsa3-supabase/ client-supabase/ marketplace/)
 for i in "${!apps[@]}"; do
+  printf 'Checking published app: %s\n' "$base/${mounts[$i]}"
   curl --fail --silent --show-error --retry 3 "$base/${mounts[$i]}?release=$GITHUB_SHA" -o "$STAGE/smoke.html"
   cmp "$STAGE/${apps[$i]}/dist/index.html" "$STAGE/smoke.html"
   asset=$(grep -oE 'src="[^"]+\.js"' "$STAGE/smoke.html" | head -1 | cut -d'"' -f2)
