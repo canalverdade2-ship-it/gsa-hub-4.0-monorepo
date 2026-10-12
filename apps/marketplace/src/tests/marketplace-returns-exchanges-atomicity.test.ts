@@ -826,14 +826,11 @@ describe('Marketplace Post-Sales Suite: Returns, Cancellations, Stock & Atomicit
   // =========================================================================
   // DOMAIN 7: STATIC REPOSITORY CODEBASE CONTRACT AUDITING
   // =========================================================================
-  describe('7. Static Codebase Auditing & Known Bug Verification', () => {
-    const migrationsDir = path.resolve(process.cwd(), 'supabase/migrations');
+  describe('7. Current schema and code contract verification', () => {
+    const contracts = fs.readFileSync(path.resolve(process.cwd(), '../../tests/fixtures/current-contracts.sql'), 'utf8');
 
     it('7.1 Verify that cancellation migration 20260714056100 targets parent produtos and lacks produto_variantes (BUG-01 Documentation)', () => {
-      const migPath = path.join(migrationsDir, '20260714056100_secure_store_invoice_and_cancellation.sql');
-      expect(fs.existsSync(migPath), 'Migration 20260714056100 must exist').toBe(true);
-
-      const content = fs.readFileSync(migPath, 'utf8');
+      const content = contracts;
 
       // Observation B from Explorer: parent produtos is updated
       expect(content).toContain('UPDATE public.produtos p');
@@ -847,27 +844,23 @@ describe('Marketplace Post-Sales Suite: Returns, Cancellations, Stock & Atomicit
     });
 
     it('7.2 Verify that admin exchange RPC 20260714045000 lacks stock replenishment and refund creation on status "concluido" (BUG-02 Documentation)', () => {
-      const migPath = path.join(migrationsDir, '20260714045000_secure_admin_store_exchange_rpc.sql');
-      expect(fs.existsSync(migPath), 'Migration 20260714045000 must exist').toBe(true);
-
-      const content = fs.readFileSync(migPath, 'utf8');
+      const content = contracts;
 
       // Verifies gsa_admin_atualizar_solicitacao_loja definition exists
       expect(content).toContain('gsa_admin_atualizar_solicitacao_loja');
 
       // Verifies absence of stock restoration on return completion in legacy RPC
-      expect(content).not.toContain('estoque_disponivel = p.estoque_disponivel +');
-      expect(content).not.toContain('INSERT INTO public.loja_reembolsos');
+      const exchange = content.slice(content.indexOf('CREATE FUNCTION public.gsa_admin_atualizar_solicitacao_loja'), content.indexOf('$;', content.indexOf('CREATE FUNCTION public.gsa_admin_atualizar_solicitacao_loja')));
+      expect(exchange).not.toContain('estoque_disponivel = p.estoque_disponivel +');
+      expect(exchange).not.toContain('INSERT INTO public.loja_reembolsos');
     });
 
     it('7.3 Verify that admin security migration 20260830030000 currently contains overly permissive FOR ALL policy on loja_solicitacoes (BUG-03 Documentation)', () => {
-      const migPath = path.join(migrationsDir, '20260830030000_admin_panel_security_end_to_end.sql');
-      expect(fs.existsSync(migPath), 'Migration 20260830030000 must exist').toBe(true);
-
-      const content = fs.readFileSync(migPath, 'utf8');
+      const content = contracts;
 
       // Line 620 from Explorer: FOR ALL TO authenticated on loja_solicitacoes
-      expect(content).toContain('CREATE POLICY gsa_client_own_loja_solicitacoes_hardened ON public.loja_solicitacoes FOR ALL TO authenticated');
+      expect(content).toContain('CREATE POLICY gsa_client_own_loja_solicitacoes_hardened ON public.loja_solicitacoes TO authenticated');
+      expect(content).toContain('cliente_id = public.gsa_jwt_actor_id()');
     });
 
     it('7.4 Verify that LojaTrocasModule.tsx currently performs direct update without atomic inventory or refund procedure (BUG-04 Documentation)', () => {

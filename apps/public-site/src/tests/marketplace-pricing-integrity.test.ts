@@ -22,8 +22,12 @@ const { mockFrom, mockRpc, mockCallClientRpc, createQueryBuilder } = vi.hoisted(
   };
 });
 
+const mockInvoke = vi.fn();
+const mockGetSession = vi.fn();
 vi.mock('../lib/supabase', () => ({
   supabase: {
+    auth: { getSession: (...args: any[]) => mockGetSession(...args) },
+    functions: { invoke: (...args: any[]) => mockInvoke(...args) },
     from: (...args: any[]) => mockFrom(...args),
     rpc: (...args: any[]) => mockRpc(...args),
   },
@@ -281,6 +285,8 @@ function calculateBuggyLegacyServerTotals(params: PricingCalculationParams) {
 describe('Marketplace Pricing Integrity Suite (FLAW-03, FLAW-04)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'test-user' }, access_token: 'test-token' } } });
+    mockInvoke.mockResolvedValue({ data: { link: 'https://checkout.example.test/order', order_nsu: 'server-order', total: 150 }, error: null });
     mockFrom.mockImplementation(() => createQueryBuilder());
   });
 
@@ -509,24 +515,20 @@ describe('Marketplace Pricing Integrity Suite (FLAW-03, FLAW-04)', () => {
       expect(server.total).toBe(190.00);
     });
 
-    it('2.4 should revert total when switching payment method from PIX to Credit Card', () => {
-      const baseParams: PricingCalculationParams = {
-        cartItems: [
-          { id: '1', item_id: 'prod-1', tipo: 'produto', quantidade: 1, valor_unitario: 300.00 },
-        ],
-        pixPercentage: 5,
-      };
-
-      // Customer chooses PIX: R$ 15 discount -> R$ 285.00
-      const pixTotals = calculateClientCheckoutTotals({ ...baseParams, isPix: true });
-      expect(pixTotals.descontoPix).toBe(15.00);
-      expect(pixTotals.totalFinal).toBe(285.00);
-
-      // Customer switches to Card: R$ 0 discount -> R$ 300.00
-      const cardTotals = calculateClientCheckoutTotals({ ...baseParams, isPix: false });
-      expect(cardTotals.descontoPix).toBe(0.00);
-      expect(cardTotals.totalFinal).toBe(300.00);
+    it('2.4 uses the server PIX discount and delegates charging without client prices', async () => {
+      mockCallClientRpc.mockResolvedValueOnce({ total: 190, desconto_pix: 10 });
+      mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: 190, order_nsu: 'pix-order' }, error: null });
+      const result = await createInfinitePayOrderCheckout({
+        orcamentoId: 'orc-pix-test-01', codigoOrcamento: 'ORC-PIX-123', clienteId: 'cli-001', valorLiquido: 1,
+      });
+      expect(result.success).toBe(true);
+      expect(result.total).toBe(190);
+      expect(mockCallClientRpc).toHaveBeenCalledWith('gsa_client_store_payment_quote', { p_orcamento_id: 'orc-pix-test-01' });
+      expect(mockInvoke).toHaveBeenCalledWith('gsa-payments', {
+        body: { action: 'create_store_link', orcamento_id: 'orc-pix-test-01', sessao_id: 'test-user', session_token: 'test-token' },
+      });
     });
+
 
     it('2.5 createInfinitePayOrderCheckout: must query payment quote reflecting PIX discount and charge exact discounted total', async () => {
       // Mock callClientRpc for gsa_client_store_payment_quote

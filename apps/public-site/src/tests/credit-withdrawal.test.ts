@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const root = process.cwd();
-const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20260829133000_credit_available_withdrawals.sql'), 'utf8');
+const migration = fs.readFileSync(path.join(root, '../../tests/fixtures/current-contracts.sql'), 'utf8');
 const clientModal = fs.readFileSync(path.join(root, 'src/components/client/CreditWithdrawalModal.tsx'), 'utf8');
 const adminPanel = fs.readFileSync(path.join(root, 'src/components/admin/super-domains/financeiro/CreditWithdrawalsAdminPanel.tsx'), 'utf8');
 

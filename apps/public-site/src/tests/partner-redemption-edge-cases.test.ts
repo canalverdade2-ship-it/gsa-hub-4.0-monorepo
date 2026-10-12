@@ -93,6 +93,7 @@ import type { Partner, PartnerFormData } from '../features/partners/types';
 describe('Partner Benefit Redemption System & Edge Cases Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAdminRpc.mockResolvedValue({ success: true });
     mockEnviarWhatsAppDireto.mockResolvedValue(true);
     mockGerarMensagemWhatsApp.mockReturnValue('Mensagem formatada');
     mockSendAdminWhatsAppNotification.mockResolvedValue(true);
@@ -412,16 +413,11 @@ describe('Partner Benefit Redemption System & Edge Cases Test Suite', () => {
 
       expect(success).toBe(true);
 
-      // Verify DB update
-      expect(mockFrom).toHaveBeenCalledWith('parceiros_resgates');
-      expect(updateMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          link_ativacao: 'https://petlove.com.br/convenio/ativar?cupom=GSA100OFF',
-          status: 'concluido',
-          data_ativacao: expect.any(String),
-        })
-      );
-      expect(updateEqMock).toHaveBeenCalledWith('id', 'res-complete-99');
+      // Completion is persisted by the authorized administrative RPC.
+      expect(mockAdminRpc).toHaveBeenCalledWith('gsa_admin_complete_partner_redemption', {
+        p_resgate_id: 'res-complete-99', p_link_ativacao: 'https://petlove.com.br/convenio/ativar?cupom=GSA100OFF',
+      });
+      expect(updateMock).not.toHaveBeenCalled();
 
       // Verify WhatsApp content formatting (clean layout)
       expect(mockEnviarWhatsAppDireto).toHaveBeenCalledWith(

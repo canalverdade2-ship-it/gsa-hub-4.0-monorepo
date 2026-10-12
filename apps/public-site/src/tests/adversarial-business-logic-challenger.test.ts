@@ -66,13 +66,15 @@ const mockFrom = vi.fn();
 const mockAdminRpc = vi.fn();
 const mockCallClientRpc = vi.fn();
 
+const mockInvoke = vi.fn();
+const mockGetSession = vi.fn();
 vi.mock('../lib/supabase', () => ({
   supabase: {
+    auth: { getSession: (...args: any[]) => mockGetSession(...args) },
+    functions: { invoke: (...args: any[]) => mockInvoke(...args) },
     rpc: (...args: any[]) => mockRpc(...args),
     from: (...args: any[]) => mockFrom(...args),
-    functions: {
-      invoke: vi.fn(),
-    },
+
   },
   getSupabase: () => ({
     rpc: (...args: any[]) => mockRpc(...args),
@@ -161,6 +163,9 @@ function setDocReferrer(val: string) {
 describe('EMPIRICAL CHALLENGER 1: Adversarial Business Logic Stress Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAdminRpc.mockResolvedValue({ success: true });
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'test-user' }, access_token: 'test-token' } } });
+    mockInvoke.mockResolvedValue({ data: { link: 'https://checkout.example.test/order', order_nsu: 'server-order', total: 150 }, error: null });
     mockSessionStorage.clear();
     mockLocalStorage.clear();
     global.fetch = vi.fn() as any;
@@ -211,119 +216,70 @@ describe('EMPIRICAL CHALLENGER 1: Adversarial Business Logic Stress Test Suite',
       }
     });
 
-    it('1.3 Fractional cents & IEEE-754 precision: sub-cent values (< 0.01) treated as zero-cost; standard values converted accurately to integer cents', async () => {
-      const subCentResult = await createInfinitePayOrderCheckout({
-        orcamentoId: 'orc-subcent-01',
-        codigoOrcamento: 'ORC-SUBCENT-01',
-        clienteId: 'cli-001',
-        valorLiquido: 0.0049,
-      });
-      expect(subCentResult.success).toBe(true);
-      expect(global.fetch).not.toHaveBeenCalled();
-
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ url: 'https://checkout.infinitepay.io/pay/link_01' }),
-      });
-
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        }),
-        insert: vi.fn().mockResolvedValue({ error: null }),
-      });
-
-      const floatAmount = 0.1 + 0.2;
-      mockCallClientRpc.mockResolvedValueOnce({ total: floatAmount });
-      const floatResult = await createInfinitePayOrderCheckout({
-        orcamentoId: 'orc-float-01',
-        codigoOrcamento: 'ORC-FLOAT-01',
-        clienteId: 'cli-001',
-        valorLiquido: floatAmount,
-      });
-
-      expect(floatResult.success).toBe(true);
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      const callArgs = (global.fetch as any).mock.calls[0];
-      expect(callArgs[0]).toBe('https://api.checkout.infinitepay.io/links');
-      const bodyJson = JSON.parse(callArgs[1].body);
-      expect(bodyJson.items[0].price).toBe(30);
-    });
-
-    it('1.4 Large amounts: R$ 1.000.000,00 and R$ 99.999.999,99 converted accurately to cents', async () => {
-      const testAmounts = [
-        { amount: 1000000.00, expectedCents: 100000000 },
-        { amount: 99999999.99, expectedCents: 9999999999 },
-      ];
-
-      for (const item of testAmounts) {
+    it('1.3 server-authoritative checkout forwards only authenticated order identity', async () => {
+      for (const amount of [0.009,0.30000000000000004]) {
         vi.clearAllMocks();
-        mockCallClientRpc.mockResolvedValueOnce({ total: item.amount });
-        (global.fetch as any).mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ url: 'https://checkout.infinitepay.io/pay/link_large' }),
+        mockCallClientRpc.mockResolvedValueOnce({ total: amount });
+        mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
+        const result = await createInfinitePayOrderCheckout({
+          orcamentoId: 'order-contract', codigoOrcamento: 'ORDER', clienteId: 'client',
+          valorLiquido: 999999, clienteNome: '<untrusted>', clienteEmail: 'untrusted@example.test',
         });
-
-        mockFrom.mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
-          }),
-          insert: vi.fn().mockResolvedValue({ error: null }),
-        });
-
-        const res = await createInfinitePayOrderCheckout({
-          orcamentoId: 'orc-large-01',
-          codigoOrcamento: 'ORC-LARGE-01',
-          clienteId: 'cli-001',
-          valorLiquido: item.amount,
-        });
-
-        expect(res.success).toBe(true);
-        expect(global.fetch).toHaveBeenCalledTimes(1);
-        const callArgs = (global.fetch as any).mock.calls[0];
-        const bodyJson = JSON.parse(callArgs[1].body);
-        expect(bodyJson.items[0].price).toBe(item.expectedCents);
+        expect(result.success).toBe(true);
+        expect(result.total).toBe(amount);
+        expect(global.fetch).not.toHaveBeenCalled();
+        if (amount < 0.01) {
+          expect(mockInvoke).not.toHaveBeenCalled();
+        } else {
+          expect(mockInvoke).toHaveBeenCalledWith('gsa-payments', {
+            body: { action: 'create_store_link', orcamento_id: 'order-contract', sessao_id: 'test-user', session_token: 'test-token' },
+          });
+        }
       }
     });
 
-    it('1.5 Customer information sanitization: cleans names, trims emails, formats Brazilian phone numbers with +55', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ url: 'https://checkout.infinitepay.io/pay/link_cust' }),
-      });
+    it('1.4 server-authoritative checkout forwards only authenticated order identity', async () => {
+      for (const amount of [1000000,99999999.99]) {
+        vi.clearAllMocks();
+        mockCallClientRpc.mockResolvedValueOnce({ total: amount });
+        mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
+        const result = await createInfinitePayOrderCheckout({
+          orcamentoId: 'order-contract', codigoOrcamento: 'ORDER', clienteId: 'client',
+          valorLiquido: 999999, clienteNome: '<untrusted>', clienteEmail: 'untrusted@example.test',
+        });
+        expect(result.success).toBe(true);
+        expect(result.total).toBe(amount);
+        expect(global.fetch).not.toHaveBeenCalled();
+        if (amount < 0.01) {
+          expect(mockInvoke).not.toHaveBeenCalled();
+        } else {
+          expect(mockInvoke).toHaveBeenCalledWith('gsa-payments', {
+            body: { action: 'create_store_link', orcamento_id: 'order-contract', sessao_id: 'test-user', session_token: 'test-token' },
+          });
+        }
+      }
+    });
 
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        }),
-        insert: vi.fn().mockResolvedValue({ error: null }),
-      });
-
-      mockCallClientRpc.mockResolvedValueOnce({ total: 50 });
-
-      await createInfinitePayOrderCheckout({
-        orcamentoId: 'orc-cust-01',
-        codigoOrcamento: 'ORC-CUST-01',
-        clienteId: 'cli-001',
-        valorLiquido: 50.00,
-        clienteNome: '   Adriano de Farias   ',
-        clienteEmail: '   adriano@grupogsa.com.br   ',
-        clienteTelefone: '(11) 97185-8372',
-      });
-
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      const callArgs = (global.fetch as any).mock.calls[0];
-      expect(callArgs[0]).toBe('https://api.checkout.infinitepay.io/links');
-      const bodyJson = JSON.parse(callArgs[1].body);
-      expect(bodyJson.customer.name).toBe('Adriano de Farias');
-      expect(bodyJson.customer.email).toBe('adriano@grupogsa.com.br');
-      expect(bodyJson.customer.phone_number).toBe('+5511971858372');
+    it('1.5 server-authoritative checkout forwards only authenticated order identity', async () => {
+      for (const amount of [50]) {
+        vi.clearAllMocks();
+        mockCallClientRpc.mockResolvedValueOnce({ total: amount });
+        mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: amount, order_nsu: 'server-order' }, error: null });
+        const result = await createInfinitePayOrderCheckout({
+          orcamentoId: 'order-contract', codigoOrcamento: 'ORDER', clienteId: 'client',
+          valorLiquido: 999999, clienteNome: '<untrusted>', clienteEmail: 'untrusted@example.test',
+        });
+        expect(result.success).toBe(true);
+        expect(result.total).toBe(amount);
+        expect(global.fetch).not.toHaveBeenCalled();
+        if (amount < 0.01) {
+          expect(mockInvoke).not.toHaveBeenCalled();
+        } else {
+          expect(mockInvoke).toHaveBeenCalledWith('gsa-payments', {
+            body: { action: 'create_store_link', orcamento_id: 'order-contract', sessao_id: 'test-user', session_token: 'test-token' },
+          });
+        }
+      }
     });
 
     it('1.6 Product price breakdown with promotional quantity quota boundaries', () => {

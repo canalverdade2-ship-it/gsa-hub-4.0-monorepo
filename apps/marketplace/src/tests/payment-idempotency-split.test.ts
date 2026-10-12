@@ -42,8 +42,12 @@ vi.mock('../lib/clientRpc', () => ({
   callClientRpc: (...args: any[]) => mockClientRpc(...args),
 }));
 
+const mockInvoke = vi.fn();
+const mockGetSession = vi.fn();
 vi.mock('../lib/supabase', () => ({
   supabase: {
+    auth: { getSession: (...args: any[]) => mockGetSession(...args) },
+    functions: { invoke: (...args: any[]) => mockInvoke(...args) },
     from: (...args: any[]) => mockFrom(...args),
     rpc: (...args: any[]) => mockRpc(...args),
   },
@@ -77,6 +81,8 @@ import type { Produto } from '../types';
 describe('Payment Idempotency, Split & PIX EMV BR Code Test Suite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'test-user' }, access_token: 'test-token' } } });
+    mockInvoke.mockResolvedValue({ data: { link: 'https://checkout.example.test/order', order_nsu: 'server-order', total: 150 }, error: null });
     global.fetch = vi.fn() as any;
   });
 
@@ -196,74 +202,18 @@ describe('Payment Idempotency, Split & PIX EMV BR Code Test Suite', () => {
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('should invoke InfinitePay checkout API when valorLiquido is positive and create order NSU', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          url: 'https://checkout.infinitepay.io/pay/inv_live_123456789',
-        }),
-      });
-
-      const orcMock = {
-        id: 'orc-pay-01',
-        subtotal_itens: 150.00,
-        loja_pedido_itens: [
-          {
-            nome: 'Ração Especial 10kg',
-            quantidade: 1,
-            valor_unitario: 150.00,
-            subtotal: 150.00,
-            tipo: 'produto',
-          },
-        ],
-      };
-
-      mockClientRpc.mockImplementation(async (name: string) =>
-        name === 'gsa_client_store_payment_quote'
-          ? { total: 150 }
-          : { success: true, fatura_id: 'fat-secure-01' }
-      );
-      mockFrom.mockImplementation((table: string) => {
-        if (table === 'orcamentos') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: orcMock, error: null }),
-              }),
-            }),
-          };
-        }
-        return {};
-      });
-
+    it('should invoke the authenticated backend and use its checkout result', async () => {
+      mockClientRpc.mockResolvedValueOnce({ total: 150 });
       const result = await createInfinitePayOrderCheckout({
-        orcamentoId: 'orc-pay-01',
-        codigoOrcamento: 'ORC-2026-999',
-        clienteId: 'cli-pay-01',
-        valorLiquido: 150.00,
-        clienteNome: 'Adriano Farias',
-        clienteEmail: 'adriano@grupogsa.com.br',
-        clienteTelefone: '11971858372',
+        orcamentoId: 'orc-pay-01', codigoOrcamento: 'ORC-2026-999', clienteId: 'cli-pay-01', valorLiquido: 1,
       });
-
-      expect(result.success).toBe(true);
-      expect(result.link).toBe('https://checkout.infinitepay.io/pay/inv_live_123456789');
-      expect(result.orderNsu).toContain('ORC-2026-999-');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.checkout.infinitepay.io/links',
-        expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('"price":15000'), // 150.00 in cents
-        })
-      );
+      expect(result).toEqual({ success: true, link: 'https://checkout.example.test/order', orderNsu: 'server-order', total: 150 });
+      expect(mockInvoke).toHaveBeenCalledWith('gsa-payments', {
+        body: { action: 'create_store_link', orcamento_id: 'orc-pay-01', sessao_id: 'test-user', session_token: 'test-token' },
+      });
+      expect(global.fetch).not.toHaveBeenCalled();
     });
-  });
 
-  // =========================================================================
-  // 3. Dynamic Discounts & Invoice Itemization (faturas)
-  // =========================================================================
-  describe('3. Dynamic Discounts & Invoice Itemization (faturas)', () => {
     it('should calculate promotional and quantity-split discounts dynamically', () => {
       const product: Produto = {
         id: 'prod-split-01',
@@ -291,81 +241,18 @@ describe('Payment Idempotency, Split & PIX EMV BR Code Test Suite', () => {
       expect(breakdown.subtotalFinal).toBe(460.00);
     });
 
-    it('should itemize invoice with breakdown (promocional, cupom, pontos, carteira)', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ url: 'https://checkout.infinitepay.io/pay/test' }),
+    it('should delegate invoice creation and discounts to the authenticated backend', async () => {
+      mockClientRpc.mockResolvedValueOnce({ total: 400 });
+      mockInvoke.mockResolvedValueOnce({ data: { link: 'https://checkout.example.test/order', total: 400, order_nsu: 'invoice-server' }, error: null });
+      const result = await createInfinitePayOrderCheckout({
+        orcamentoId: 'orc-itemized-01', codigoOrcamento: 'ORDER', clienteId: 'client', valorLiquido: 1,
       });
-
-      const orcMock = {
-        id: 'orc-itemized-01',
-        subtotal_preco_tabela: 500.00,
-        desconto_promocional: 50.00,
-        desconto_cupom: 20.00,
-        desconto_pontos: 10.00,
-        abatimento_carteira: 20.00,
-        loja_pedido_itens: [
-          {
-            nome: 'Kit Saúde Pet',
-            codigo: 'KIT-01',
-            quantidade: 2,
-            valor_unitario: 250.00,
-            subtotal: 500.00,
-            tipo: 'produto',
-          },
-        ],
-      };
-
-      const faturaInsertMock = vi.fn().mockResolvedValue({ error: null });
-      mockFrom.mockImplementation((table: string) => {
-        if (table === 'orcamentos') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: orcMock, error: null }),
-              }),
-            }),
-          };
-        }
-        if (table === 'faturas') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-              }),
-            }),
-            insert: faturaInsertMock,
-          };
-        }
-        return {};
+      expect(result.total).toBe(400);
+      expect(mockClientRpc).toHaveBeenCalledWith('gsa_client_store_payment_quote', { p_orcamento_id: 'orc-itemized-01' });
+      expect(mockInvoke).toHaveBeenCalledWith('gsa-payments', {
+        body: { action: 'create_store_link', orcamento_id: 'orc-itemized-01', sessao_id: 'test-user', session_token: 'test-token' },
       });
-
-      const netAmount = 400.00; // 500 - 50 - 20 - 10 - 20 = 400
-      mockClientRpc.mockImplementation(async (name: string) =>
-        name === 'gsa_client_store_payment_quote'
-          ? { total: netAmount }
-          : { success: true, fatura_id: 'fat-itemized-01' }
-      );
-      await createInfinitePayOrderCheckout({
-        orcamentoId: 'orc-itemized-01',
-        codigoOrcamento: 'ORC-2026-ITM',
-        clienteId: 'cli-003',
-        valorLiquido: netAmount,
-      });
-
-      expect(mockClientRpc).toHaveBeenCalledWith(
-        'gsa_client_sync_pix_invoice',
-        expect.objectContaining({
-          p_orcamento_id: 'orc-itemized-01',
-          p_itens: expect.arrayContaining([
-            expect.objectContaining({
-              nome: 'Kit Saúde Pet',
-              quantidade: 2,
-              valor_unitario: 250.00,
-            }),
-          ]),
-        })
-      );
+      expect(mockFrom).not.toHaveBeenCalled();
     });
 
     it('checkOrderStatus: should detect paid status from budget or invoice', async () => {

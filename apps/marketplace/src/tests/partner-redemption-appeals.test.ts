@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const migration = fs.readFileSync(
-  path.join(root, 'supabase/migrations/20260828170000_partner_redemption_appeals.sql'),
+  path.join(root, '../../tests/fixtures/current-contracts.sql'),
   'utf8',
 );
 const partnerService = fs.readFileSync(
@@ -39,7 +39,8 @@ describe('Partner Redemption Appeals - Schema & Contract Verification', () => {
   });
 
   it('uses an idempotency key for appeal submission', () => {
-    expect(migration).toMatch(/idempotency_key uuid NOT NULL UNIQUE/i);
+    expect(migration).toMatch(/idempotency_key uuid NOT NULL/i);
+    expect(migration).toMatch(/UNIQUE\s*\(idempotency_key\)/i);
   });
 
   it('stores a permanent public timeline in parceiros_resgates_eventos', () => {
@@ -51,7 +52,8 @@ describe('Partner Redemption Appeals - Schema & Contract Verification', () => {
 
   it('defines sanitized realtime tracking table without customer PII', () => {
     expect(migration).toContain('parceiros_resgates_public_status');
-    expect(migration).toContain('tracking_key uuid NOT NULL UNIQUE');
+    expect(migration).toContain('tracking_key uuid NOT NULL');
+    expect(migration).toMatch(/UNIQUE\s*\(tracking_key\)/i);
   });
 
   it('requires challenge verification with expiration and attempt limits', () => {

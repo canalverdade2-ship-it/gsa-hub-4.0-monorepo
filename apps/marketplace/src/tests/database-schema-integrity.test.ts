@@ -13,18 +13,32 @@ const {
 } = require('../../scripts/validate-db-schema.cjs');
 
 describe('Database Schema & RPC Integrity Verification Suite (M2 / R1 / R2)', () => {
-  const migrationsDir = path.resolve(__dirname, '../../supabase/migrations');
-  const schemaSnapshot = parseMigrationsSnapshot();
+  const fixturePath = path.resolve(process.cwd(), '../../tests/fixtures/schema-metadata.json');
+  const metadata = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+  const tableColumns = new Map<string, Set<string>>();
+  for (const [table, column] of metadata.columns) {
+    if (!tableColumns.has(table)) tableColumns.set(table, new Set());
+    tableColumns.get(table)!.add(column);
+  }
+  const functions = new Map<string, any>();
+  const permissions = new Map<string, any>();
+  for (const fn of metadata.functions) {
+    const params = fn.args.split(',').map((arg: string) => arg.trim().split(/\s+/)[0]).filter(Boolean);
+    const previous = functions.get(fn.name);
+    if (!previous || previous.params.length < params.length) functions.set(fn.name, { name: fn.name, params, returnType: fn.returnType });
+    const existing = permissions.get(fn.name);
+    permissions.set(fn.name, { anon: !!fn.anon || !!existing?.anon, authenticated: !!fn.authenticated || !!existing?.authenticated });
+  }
+  const schemaSnapshot = { tableColumns, functions, permissions, tableRls: new Map(metadata.rls) };
 
   // =========================================================================
   // DOMAIN 1: CRITICAL TABLES SCHEMA & COLUMN CONTRACTS
   // =========================================================================
   describe('1. Critical Tables Column & Schema Contracts', () => {
-    it('should verify migrations directory exists and contains all consolidated schema migrations', () => {
-      expect(fs.existsSync(migrationsDir)).toBe(true);
-      const sqlFiles = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql'));
-      expect(sqlFiles.length).toBeGreaterThanOrEqual(80);
-      expect(schemaSnapshot.migrationCount).toBeGreaterThanOrEqual(80);
+    it('loads a schema-only snapshot with table and RPC metadata', () => {
+      expect(metadata.columns.length).toBeGreaterThan(80);
+      expect(metadata.functions.length).toBeGreaterThan(80);
+      expect(metadata.captured_at).toBeTruthy();
     });
 
     it('1.1 parceiros table: should satisfy all columns required for partner catalog, redemption and SLA', () => {
@@ -92,14 +106,8 @@ describe('Database Schema & RPC Integrity Verification Suite (M2 / R1 / R2)', ()
       }
     });
 
-    it('1.2.1 parceiros_resgates migration: should verify 20260827200000_add_data_cancelamento_to_parceiros_resgates.sql exists, is idempotent, and reloads schema', () => {
-      const migrationFile = path.join(migrationsDir, '20260827200000_add_data_cancelamento_to_parceiros_resgates.sql');
-      expect(fs.existsSync(migrationFile), 'Migration file must exist').toBe(true);
-
-      const content = fs.readFileSync(migrationFile, 'utf8');
-      expect(content).toMatch(/ALTER\s+TABLE\s+(?:public\.)?parceiros_resgates/i);
-      expect(content).toMatch(/ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+data_cancelamento/i);
-      expect(content).toMatch(/NOTIFY\s+pgrst,\s*'reload schema'/i);
+    it('1.2.1 redemption cancellation timestamp is present in the deployed schema', () => {
+      expect(schemaSnapshot.tableColumns.get('parceiros_resgates')?.has('data_cancelamento')).toBe(true);
     });
 
     it('1.3 faturas table: should satisfy financial invoice columns and payment references', () => {

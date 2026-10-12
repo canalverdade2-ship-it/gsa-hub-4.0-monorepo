@@ -50,6 +50,7 @@ import {
 describe('Partner Public Redemption RPC & 24h SLA Test Suite (F4 / R3)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAdminRpc.mockResolvedValue({ success: true });
     mockEnviarWhatsAppDireto.mockResolvedValue(true);
     mockGerarMensagemWhatsApp.mockReturnValue('Mensagem formatada');
     mockSendAdminWhatsAppNotification.mockResolvedValue(true);
@@ -353,15 +354,11 @@ describe('Partner Public Redemption RPC & 24h SLA Test Suite (F4 / R3)', () => {
 
       expect(sent).toBe(true);
 
-      // Verify DB update
-      expect(mockFrom).toHaveBeenCalledWith('parceiros_resgates');
-      expect(updateMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          link_ativacao: 'https://petlove.com.br/ativar?token=xyz789',
-          status: 'concluido',
-        })
-      );
-      expect(updateEqMock).toHaveBeenCalledWith('id', 'res-completed-202');
+      // Completion is persisted by the authorized administrative RPC.
+      expect(mockAdminRpc).toHaveBeenCalledWith('gsa_admin_complete_partner_redemption', {
+        p_resgate_id: 'res-completed-202', p_link_ativacao: 'https://petlove.com.br/ativar?token=xyz789',
+      });
+      expect(updateMock).not.toHaveBeenCalled();
 
       // Verify WhatsApp delivery with clean, modern layout
       expect(mockEnviarWhatsAppDireto).toHaveBeenCalledWith(
