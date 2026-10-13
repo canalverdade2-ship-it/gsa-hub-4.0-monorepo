@@ -1,22 +1,18 @@
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowRight,
   Briefcase,
   ChevronDown,
   MessageCircle,
-  Paperclip,
   Send,
   ShieldCheck,
   Sparkles,
-  Trash2,
-  UploadCloud,
   User,
   X,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { AccessibleDialog } from '../ui/AccessibleDialog';
-import { supabase } from '../../lib/supabase';
 
 const WHATSAPP_NUMBER = '5511920857756';
 const PROJECT_OPTIONS = [
@@ -46,13 +42,6 @@ interface BudgetForm {
   solicitacao: string;
 }
 
-interface AttachedFile {
-  file: File;
-  name: string;
-  size: number;
-  type: string;
-}
-
 const EMPTY_FORM: BudgetForm = { nome: '', tipo: '', solicitacao: '' };
 const PROJECT_LABELS = new Map<string, string>(PROJECT_OPTIONS.map(([value, label]) => [value, label]));
 
@@ -68,53 +57,21 @@ function validateForm(form: BudgetForm) {
 
 export function SystemsBudgetModal({ isOpen, onClose }: SystemsBudgetModalProps) {
   const [form, setForm] = useState<BudgetForm>(EMPTY_FORM);
-  const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setForm(EMPTY_FORM);
-    setAttachedFile(null);
     setSubmitting(false);
-    setUploadProgress(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   }, [isOpen]);
 
   const closeSafely = () => {
     if (submitting) return;
     setForm(EMPTY_FORM);
-    setAttachedFile(null);
-    setUploadProgress(null);
     onClose();
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error('O arquivo excede o limite máximo de 15 MB.');
-      event.target.value = '';
-      return;
-    }
-
-    setAttachedFile({ file, name: file.name, size: file.size, type: file.type || 'application/octet-stream' });
-  };
-
-  const handleRemoveFile = () => {
-    setAttachedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const submitToWhatsApp = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submitToWhatsApp = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const validationMessage = validateForm(form);
     if (validationMessage) {
@@ -122,47 +79,8 @@ export function SystemsBudgetModal({ isOpen, onClose }: SystemsBudgetModalProps)
       return;
     }
 
-    // Reserve the WhatsApp tab on the click gesture before awaiting the file upload.
-    const whatsappWindow = attachedFile ? window.open('about:blank', '_blank') : null;
-    if (attachedFile && !whatsappWindow) {
-      toast.error('Permita a abertura de uma nova aba para enviar o anexo pelo WhatsApp.');
-      return;
-    }
-
     setSubmitting(true);
-    setUploadProgress(null);
-
     try {
-      let attachmentUrl: string | null = null;
-      if (attachedFile) {
-        setUploadProgress('Preparando seu anexo...');
-        const extension = attachedFile.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') || 'dat';
-        const safeBaseName = attachedFile.name
-          .replace(/\.[^/.]+$/, '')
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-zA-Z0-9_-]/g, '_')
-          .slice(0, 40);
-        const objectName = `public/whatsapp-requests/${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeBaseName}.${extension}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('orcamentos-anexos')
-          .upload(objectName, attachedFile.file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: attachedFile.type,
-          });
-        if (uploadError) throw new Error('Não foi possível preparar o anexo. Tente novamente ou envie sem arquivo.');
-
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-          .from('orcamentos-anexos')
-          .createSignedUrl(objectName, 60 * 60 * 24 * 7);
-        if (signedUrlError || !signedUrlData?.signedUrl) {
-          throw new Error('Não foi possível gerar o link temporário do anexo. Tente novamente ou envie sem arquivo.');
-        }
-        attachmentUrl = signedUrlData.signedUrl;
-      }
-
       const message = [
         'Olá! Gostaria de solicitar um orçamento para um projeto.',
         '',
@@ -171,27 +89,19 @@ export function SystemsBudgetModal({ isOpen, onClose }: SystemsBudgetModalProps)
         '',
         '*Descrição do projeto:*',
         form.solicitacao.trim(),
-        ...(attachmentUrl ? ['', `*Arquivo de referência (link temporário por 7 dias):* ${attachmentUrl}`] : []),
       ].join('\n');
       const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
-      if (whatsappWindow) {
-        whatsappWindow.opener = null;
-        whatsappWindow.location.href = whatsappUrl;
-      } else {
-        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-      }
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 
       toast.success('Solicitação pronta no WhatsApp. Revise e toque em enviar na conversa.');
       setSubmitting(false);
       onClose();
     } catch (error) {
-      whatsappWindow?.close();
       console.error('Falha ao preparar solicitação para WhatsApp:', error);
       toast.error(error instanceof Error ? error.message : 'Não foi possível abrir o WhatsApp agora.');
       setSubmitting(false);
-      setUploadProgress(null);
-    }
+      }
   };
 
   return (
@@ -300,53 +210,9 @@ export function SystemsBudgetModal({ isOpen, onClose }: SystemsBudgetModalProps)
             <p className="mt-1 text-[11px] text-slate-500">Mínimo de 20 caracteres para entendermos sua necessidade.</p>
           </div>
 
-          <div className="mt-5">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-1.5">
-              <label htmlFor="budget-file-upload" className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-800">
-                <Paperclip className="h-3.5 w-3.5 text-[#8a6b2f]" /> Anexo <span className="text-xs font-normal text-slate-500">(opcional)</span>
-              </label>
-              <span className="text-[10px] font-medium text-slate-500">PDF, DOCX, imagem ou planilha · até 15 MB</span>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              id="budget-file-upload"
-              onChange={handleFileSelect}
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.webp"
-              className="hidden"
-              disabled={submitting}
-            />
-
-            {!attachedFile ? (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={submitting}
-                className="group flex min-h-[92px] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white/70 px-4 py-3 text-center transition duration-200 hover:border-[#a7833d] hover:bg-[#d7b96e]/5 disabled:cursor-wait disabled:opacity-60"
-              >
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5f1e7] text-[#8a6b2f] transition group-hover:scale-105"><UploadCloud className="h-5 w-5" /></span>
-                <span className="mt-1.5 text-xs font-semibold text-slate-800"><span className="text-[#8a6b2f]">Toque para anexar</span> ou escolha um arquivo</span>
-                <span className="mt-0.5 text-[10px] text-slate-500">O WhatsApp receberá um link temporário do arquivo.</span>
-              </button>
-            ) : (
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-50/70 p-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white"><Paperclip className="h-4 w-4" /></span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-xs font-bold text-slate-900" title={attachedFile.name}>{attachedFile.name}</span>
-                    <span className="mt-0.5 block text-[10px] text-emerald-800">{formatFileSize(attachedFile.size)} · link válido por 7 dias</span>
-                  </span>
-                </div>
-                <button type="button" onClick={handleRemoveFile} disabled={submitting} aria-label="Remover anexo" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-red-600 transition hover:bg-red-50 disabled:opacity-50">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
-
           <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-[#d7b96e]/20 bg-[#d7b96e]/[0.07] p-3">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#8a6b2f]" />
-            <p className="text-[11px] leading-relaxed text-slate-600">Seus dados serão incluídos na mensagem do WhatsApp. O anexo, se houver, será compartilhado por um link temporário com a equipe.</p>
+            <p className="text-[11px] leading-relaxed text-slate-600">Seu nome, tipo de projeto e descrição serão incluídos na mensagem do WhatsApp.</p>
           </div>
         </div>
 
@@ -357,7 +223,7 @@ export function SystemsBudgetModal({ isOpen, onClose }: SystemsBudgetModalProps)
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#0c1825] via-[#172b40] to-[#0c1825] px-6 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(12,24,37,0.2)] transition duration-200 hover:shadow-[0_10px_24px_rgba(12,24,37,0.28)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#d7b96e] focus:ring-offset-2"
           >
             {submitting ? (
-              <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /><span>{uploadProgress || 'Preparando WhatsApp...'}</span></>
+              <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /><span>{'Preparando WhatsApp...'}</span></>
             ) : (
               <><span>Enviar pelo WhatsApp</span><Send className="h-4 w-4 text-[#d7b96e]" /><ArrowRight className="h-4 w-4" /></>
             )}
