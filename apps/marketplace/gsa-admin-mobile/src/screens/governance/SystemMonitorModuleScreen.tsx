@@ -24,7 +24,7 @@ interface TableMetric {
 }
 
 export const SystemMonitorModuleScreen: React.FC<SystemMonitorModuleScreenProps> = () => {
-  const [activeTab, setActiveTab] = useState<'vps' | 'database' | 'cloudflare' | 'users'>('vps');
+  const [activeTab, setActiveTab] = useState<'vps' | 'database' | 'users'>('vps');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sendingAlert, setSendingAlert] = useState(false);
@@ -173,14 +173,6 @@ export const SystemMonitorModuleScreen: React.FC<SystemMonitorModuleScreenProps>
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabBtn, activeTab === 'cloudflare' && styles.tabBtnActive]}
-          onPress={() => setActiveTab('cloudflare')}
-        >
-          <Text style={[styles.tabBtnText, activeTab === 'cloudflare' && styles.tabBtnTextActive]}>
-            🌐 Edge & Cloudflare
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           style={[styles.tabBtn, activeTab === 'users' && styles.tabBtnActive]}
           onPress={() => setActiveTab('users')}
         >
@@ -290,31 +282,6 @@ export const SystemMonitorModuleScreen: React.FC<SystemMonitorModuleScreenProps>
                   <Text style={styles.tableSub}>Linhas mortas (Dead tuples): {t.dead_rows}</Text>
                 </View>
               ))}
-            </View>
-          )}
-
-          {/* TAB 3: CLOUDFLARE */}
-          {activeTab === 'cloudflare' && (
-            <View style={styles.tabContent}>
-              <View style={styles.infoCard}>
-                <Text style={styles.infoTitle}>Status da Proteção Edge Cloudflare</Text>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoKey}>Proxy de Borda:</Text>
-                  <Text style={[styles.infoVal, { color: '#059669', fontWeight: 'bold' }]}>ATIVO (Laranja)</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoKey}>Certificado SSL/TLS:</Text>
-                  <Text style={styles.infoVal}>Strict / Automático</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoKey}>Mitigação DDoS:</Text>
-                  <Text style={styles.infoVal}>Habilitado (Automático)</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoKey}>Taxa de Cache Hit:</Text>
-                  <Text style={styles.infoVal}>84.2%</Text>
-                </View>
-              </View>
             </View>
           )}
 

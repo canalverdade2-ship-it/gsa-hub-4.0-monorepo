@@ -17,14 +17,14 @@ Aplicações:
 - Estrutura criada sem apagar as origens.
 - Dependências instaladas com pnpm.
 - pnpm -r build aprovado nos cinco apps.
-- O Marketplace está sem o módulo de empréstimos e sem dependências ativas de Cloudflare R2.
+- O Marketplace está sem o módulo de empréstimos e usa exclusivamente o armazenamento local da VPS/Supabase.
 
 
 ## Estado da limpeza técnica — 09/10/2026
 
 - O módulo de empréstimos foi retirado das rotas, menus, painéis, relatórios e componentes ativos do Marketplace.
 - Os artefatos de armazenamento ativos usam a camada Supabase Storage; referências antigas ficam apenas em backups/scratch históricos e scripts de webhook legados, que não entram no build Vite.
-- O cartão visual `Cloudflare R2` foi removido da interface e substituído por `Supabase Storage`.
+- O armazenamento visual é apresentado como `Supabase Storage` local na VPS.
 - As fontes `apps/marketplace` e `apps/public-site` estão sincronizadas.
 - Build validado anteriormente para os cinco aplicativos; após a última remoção, o build do Marketplace foi validado novamente com sucesso (4477 módulos).
 
@@ -35,7 +35,7 @@ Aplicações:
 - A API publicada em `https://api.147-15-43-141.nip.io` responde em 200 nos endpoints raiz, REST e Auth.
 - O site público foi publicado em `https://api.147-15-43-141.nip.io/`.
 - O painel Supabase foi publicado em `https://api.147-15-43-141.nip.io/gsa3-supabase/`.
-- Os bundles publicados foram verificados externamente: não contêm referências a empréstimos nem a Cloudflare R2.
+- Os bundles publicados foram verificados externamente: não contêm referências a empréstimos nem a provedores de armazenamento externo.
 
 
 ## Inicialização limpa de produção
@@ -44,10 +44,10 @@ A auditoria encontrou dados antigos ativos na VPS: 14 usuários Auth, 1 cliente,
 
 ## Saneamento final da árvore
 
-- Snapshots, dumps, scripts de diagnóstico e artefatos de deploy antigos foram movidos para `archive/legacy-snapshots`, `archive/legacy-r2`, `archive/legacy-tooling` e `archive/generated-artifacts`.
+- Snapshots, dumps, scripts de diagnóstico e artefatos de deploy antigos foram movidos para os diretórios de arquivo correspondentes.
 - A árvore executável de cada app ficou restrita a código, configuração, assets e dependências do próprio app.
 - Os adapters de Edge Functions foram renomeados para `storage.ts` e usam diretamente a API do Supabase Storage na VPS.
-- O verificador `pnpm audit:monorepo` confirma que não existem referências ativas a R2 no código executável.
+- O verificador `pnpm audit:monorepo` confirma que não existem referências ativas a provedores externos de armazenamento no código executável.
 - Última validação: `pnpm build:all`, `pnpm test:all`, `pnpm lint:all` e `pnpm audit:all` concluídos sem erro.
 
 Os comandos principais da raiz são:
@@ -57,7 +57,7 @@ pnpm build:all
 pnpm audit:all
 ```
 
-`pnpm audit:all` é o gate de armazenamento e impede regressão para R2 no código executável.
+`pnpm audit:all` é o gate de armazenamento e impede regressão para provedores externos no código executável.
 
 ## Validação adicional
 

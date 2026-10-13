@@ -15,7 +15,6 @@ import {
   Lock,
   Search,
   MessageSquare,
-  Globe,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { formatDateTime } from '../../lib/utils';
@@ -26,7 +25,6 @@ import { useRealtimeSubscription } from '../../hooks/useRealtime';
 
 import { OracleMetricsPanel } from './infra/OracleMetricsPanel';
 import { VPSTerminal } from './infra/VPSTerminal';
-import { CloudflareManager } from './infra/CloudflareManager';
 import { WhatsAppQRCodeManager } from './infra/WhatsAppQRCodeManager';
 
 type SystemSnapshot = {
@@ -64,7 +62,7 @@ function formatBytes(value: unknown) {
 }
 
 export function SystemMonitorModule(_props: { colaboradorId?: string; colaboradorNome?: string | null }) {
-  const [activeTab, setActiveTab] = useState<'vps' | 'cloudflare' | 'database' | 'whatsapp'>('vps');
+  const [activeTab, setActiveTab] = useState<'vps' | 'database' | 'whatsapp'>('vps');
   const [snapshot, setSnapshot] = useState<SystemSnapshot>({ metrics: {}, tables: [], users_list: [] });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -274,7 +272,7 @@ export function SystemMonitorModule(_props: { colaboradorId?: string; colaborado
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Infraestrutura e Observabilidade</p>
             <h1 className="mt-2 flex items-center gap-3 text-2xl font-black"><ShieldCheck className="h-6 w-6 text-emerald-400" /> Saúde do Sistema & VPS</h1>
-            <p className="mt-2 text-sm text-white/55">Gestão completa da Oracle Cloud, Cloudflare e Banco de Dados.</p>
+            <p className="mt-2 text-sm text-white/55">Gestão completa da VPS, armazenamento local e Banco de Dados.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -318,12 +316,6 @@ export function SystemMonitorModule(_props: { colaboradorId?: string; colaborado
             <Cpu className="w-4 h-4 text-blue-400" /> Oracle VPS & Terminal
           </button>
           <button
-            onClick={() => setActiveTab('cloudflare')}
-            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm rounded-t-xl transition-colors ${activeTab === 'cloudflare' ? 'bg-neutral-900 text-white border-t border-x border-neutral-800' : 'text-neutral-400 hover:text-white'}`}
-          >
-            <Globe className="w-4 h-4 text-orange-400" /> Cloudflare
-          </button>
-          <button
             onClick={() => setActiveTab('database')}
             className={`flex items-center gap-2 px-4 py-3 font-bold text-sm rounded-t-xl transition-colors ${activeTab === 'database' ? 'bg-neutral-900 text-white border-t border-x border-neutral-800' : 'text-neutral-400 hover:text-white'}`}
           >
@@ -344,11 +336,6 @@ export function SystemMonitorModule(_props: { colaboradorId?: string; colaborado
           <OracleMetricsPanel key={`vps-${refreshKey}`} />
           <VPSTerminal key={`term-${refreshKey}`} />
         </div>
-      )}
-
-      {/* Conteúdo da Aba Cloudflare */}
-      {activeTab === 'cloudflare' && (
-        <CloudflareManager key={`cf-${refreshKey}`} />
       )}
 
       {/* Conteúdo da Aba WhatsApp & Evolution API */}

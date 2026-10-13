@@ -42,7 +42,7 @@ export function GovernancaSuperDomain({
     {
       id: 'infraestrutura',
       label: 'Infraestrutura & VPS',
-      description: 'Oracle Cloud, Cloudflare e banco',
+      description: 'VPS, armazenamento local e banco',
       icon: Server,
       adminOnly: true,
     },

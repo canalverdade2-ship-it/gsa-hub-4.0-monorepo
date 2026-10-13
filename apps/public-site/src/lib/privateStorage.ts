@@ -3,9 +3,9 @@ import { generateUUID } from './utils';
 import { uploadFile, getPrivateFileUrl, removeFile, privateBucketPath } from './storage';
 
 export const PRIVATE_DOCUMENT_BUCKET = 'gsa-private-documents';
-export const PRIVATE_DOCUMENT_PREFIX = `r2://${PRIVATE_DOCUMENT_BUCKET}/`;
+export const PRIVATE_DOCUMENT_PREFIX = `vps://${PRIVATE_DOCUMENT_BUCKET}/`;
 export const CLIENT_DOCUMENT_BUCKET = 'documentos_cliente';
-export const CLIENT_DOCUMENT_PREFIX = `r2://${CLIENT_DOCUMENT_BUCKET}/`;
+export const CLIENT_DOCUMENT_PREFIX = `vps://${CLIENT_DOCUMENT_BUCKET}/`;
 export const MAX_PRIVATE_DOCUMENT_SIZE = 10 * 1024 * 1024;
 
 const ALLOWED_EXTENSIONS = new Set([
@@ -166,11 +166,11 @@ export async function uploadPrivateDocument(
   const uniqueName = `${generateUUID()}-${safeName}`;
   const path = `${options.scope}/${ownerId}/${options.context}/${options.contextId}/${uniqueName}`;
 
-  const { path: r2Path } = await uploadFile(file, PRIVATE_DOCUMENT_BUCKET, path);
+  const { path: storagePath } = await uploadFile(file, PRIVATE_DOCUMENT_BUCKET, path);
 
   return {
-    reference: buildPrivateDocumentReference(r2Path),
-    path: r2Path,
+    reference: buildPrivateDocumentReference(storagePath),
+    path: storagePath,
     fileName: file.name,
     mimeType: file.type || 'application/octet-stream',
     size: file.size,

@@ -71,9 +71,9 @@ serve(async (req) => {
       let uploadErr = null;
       let publicUrl = '';
       try {
-        const r2Key = `public/whatsapp/${fileName}`;
-        await storageUpload(r2Key, byteArray, mimeType);
-        publicUrl = storagePublicUrl(r2Key);
+        const storageKey = `public/whatsapp/${fileName}`;
+        await storageUpload(storageKey, byteArray, mimeType);
+        publicUrl = storagePublicUrl(storageKey);
       } catch (e: any) {
         uploadErr = e;
       }

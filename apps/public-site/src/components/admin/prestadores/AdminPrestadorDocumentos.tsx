@@ -124,7 +124,7 @@ export function AdminPrestadorDocumentos({
         const fileName = `${uploadData.tipo}-admin-${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
         const filePath = `${prestadorId}/${fileName}`;
 
-        const { url: __publicUrl, path: __r2Path } = await uploadFile(file, 'documentos_prestador', filePath);
+        const { url: __publicUrl, path: __storagePath } = await uploadFile(file, 'documentos_prestador', filePath);
 
         // publicUrl is handled directly
         return __publicUrl;

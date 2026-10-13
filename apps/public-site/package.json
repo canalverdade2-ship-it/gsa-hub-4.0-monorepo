@@ -10,7 +10,6 @@
     "shopee:setup": "node automation/shopee-executor/index.mjs --setup",
     "shopee:check": "node automation/shopee-executor/index.mjs --check",
     "shopee:executor": "node automation/shopee-executor/index.mjs",
-    "deploy:cloudflare": "npm run build && wrangler pages deploy dist --project-name gsa-hub",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",

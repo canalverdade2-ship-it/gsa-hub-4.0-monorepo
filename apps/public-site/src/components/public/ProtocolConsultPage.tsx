@@ -413,7 +413,7 @@ export default function ProtocolConsultPage() {
               </p>
                 </div>
 
-                {result.recurso ? (
+                {result?.recurso ? (
                   <div className={`rounded-2xl border p-4 ${
                     result.recurso.status === 'em_analise'
                       ? 'border-sky-200 bg-sky-50'

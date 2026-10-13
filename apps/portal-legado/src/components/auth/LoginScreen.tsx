@@ -66,11 +66,17 @@ export default function LoginScreen({ onAuthenticated }: LoginScreenProps) {
             background: '#07111f'
           }}
         >
-          <img
-            src={`${import.meta.env.BASE_URL}gsa-logo-original-banner.png`}
-            alt="Logo GSA HUB - Soluções Digitais"
-            style={{ display: 'block', width: '100%', height: 180, objectFit: 'cover', objectPosition: 'center' }}
-          />
+          <div
+            role="img"
+            aria-label="Logo GSA HUB - Soluções Digitais"
+            style={{ display: 'grid', placeItems: 'center', width: '100%', height: 180, padding: '24px 18px', textAlign: 'center' }}
+          >
+            <div>
+              <div style={{ color: '#f6d77d', fontFamily: 'Georgia, serif', fontSize: 'clamp(32px, 9vw, 52px)', letterSpacing: '0.16em', lineHeight: 1, whiteSpace: 'nowrap' }}>GSA HUB</div>
+              <div style={{ width: '78%', height: 1, margin: '16px auto 12px', background: '#c19a43' }} />
+              <div style={{ color: '#f6d77d', fontSize: 12, fontWeight: 700, letterSpacing: '0.34em', textTransform: 'uppercase' }}>Soluções Digitais</div>
+            </div>
+          </div>
         </div>
         {!isClientPortal && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 24 }}>

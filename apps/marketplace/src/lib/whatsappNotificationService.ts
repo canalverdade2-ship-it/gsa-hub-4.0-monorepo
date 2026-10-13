@@ -1043,7 +1043,7 @@ async function executeBatch(batch: ActiveBatch): Promise<void> {
     ...(mediaItem?.options || {}),
   };
 
-  // R2 Integration: Apply dynamic variations
+  // Storage integration: apply dynamic variations
   let finalText = compositeText;
   if (options?.enableVariation !== false) {
     if (options?.clienteNome || options?.enableVariation === true) {

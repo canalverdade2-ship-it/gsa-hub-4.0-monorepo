@@ -33,4 +33,4 @@ Após copiar os `dist/` para a VPS, confirmar no navegador:
 3. leitura e gravação de um registro de teste;
 4. upload/download pelo Supabase Storage;
 5. abertura dos painéis em viewport móvel;
-6. ausência de chamadas para R2 ou para o backend antigo.
+6. ausência de chamadas para provedores externos de armazenamento ou para o backend antigo.

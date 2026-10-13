@@ -2,10 +2,9 @@
  * storage.ts — Camada de compatibilidade para os caminhos legados
  *
  * Substitui o Supabase Storage em todas as operações de arquivo.
- * Todos os uploads passam pelo gsa-hub-r2-worker que valida a sessão
- * antes de gravar no R2.
+ * Todos os uploads passam pelo Storage local da VPS, com validação de sessão.
  *
- * Mapeamento de buckets antigos → prefixos R2:
+ * Mapeamento de buckets → prefixos do Storage local:
  *   gsa-store-images        → public/store-images/
  *   gsa-site-campaigns      → public/site-campaigns/
  *   classificados-midias    → public/classified-media/
@@ -45,7 +44,7 @@ export function isPrivatePath(path: string): boolean {
   return path.startsWith('private/');
 }
 
-// ─── URL pública de um arquivo R2 / Storage ──────────────────────────────────
+// ─── URL pública de um arquivo do Storage local ──────────────────────────────
 export function getPublicFileUrl(path: string): string {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;

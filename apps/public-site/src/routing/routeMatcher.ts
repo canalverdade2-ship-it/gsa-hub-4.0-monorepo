@@ -26,6 +26,11 @@ export function matchRoute(pathname: string, search: string, hash: string): Rout
   let submodule: string | undefined;
   let itemId: string | undefined;
 
+  // Alias público mantido para compatibilidade com links antigos e bookmarks.
+  if (normalizedPath === '/acesso-restrito') {
+    return { pathname, search, hash, area: 'login', module: 'acesso-restrito', query };
+  }
+
   if (normalizedPath === '/') {
     return { pathname, search, hash, area: 'public', module: 'home', query };
   }

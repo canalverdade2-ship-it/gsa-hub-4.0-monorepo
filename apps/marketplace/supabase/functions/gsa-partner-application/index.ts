@@ -315,15 +315,15 @@ export async function handleRequest(request: Request) {
       if (!file) return null;
       const extension = EXTENSION_BY_TYPE[file.type];
       const path = `solicitacoes/${applicationId}/${kind}-${crypto.randomUUID()}.${extension}`;
-      const r2Key = `public/partner-applications/${path}`;
+      const storageKey = `public/partner-applications/${path}`;
       const fileBytes = new Uint8Array(await file.arrayBuffer());
       try {
-        await storageUpload(r2Key, fileBytes, file.type);
+        await storageUpload(storageKey, fileBytes, file.type);
       } catch (error) {
         throw new Error(`${kind}_upload_failed`);
       }
-      uploadedPaths.push(r2Key);
-      return storagePublicUrl(r2Key);
+      uploadedPaths.push(storageKey);
+      return storagePublicUrl(storageKey);
     };
 
     try {

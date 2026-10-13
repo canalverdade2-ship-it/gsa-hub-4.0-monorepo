@@ -144,7 +144,7 @@ export function SiteCampaignAdminModule() {
       const path = `campaigns/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${name}`;
       const __up = await uploadFile(file, 'gsa-site-campaigns', path);
       const publicUrl = __up.url ?? getPublicFileUrl(__up.path);
-      const r2Path = __up.path;
+      const storagePath = __up.path;
       set(variant === 'desktop' ? 'image_desktop_url' : 'image_mobile_url', publicUrl);
       toast.success('Imagem enviada.');
     } catch (error) { toast.error(message(error, 'Não foi possível enviar a imagem.')); }

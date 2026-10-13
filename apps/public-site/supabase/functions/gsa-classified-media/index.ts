@@ -234,20 +234,20 @@ export async function handleRequest(request: Request) {
       }
 
       const path = `${authenticated.clientId}/${draftId}/${Date.now()}_${crypto.randomUUID()}.${extension}`;
-      const r2Key = `public/classified-media/${path}`;
+      const storageKey = `public/classified-media/${path}`;
       const fileBytes = new Uint8Array(await file.arrayBuffer());
       
       let storageUploadResult;
       try {
-        storageUploadResult = await storageUpload(r2Key, fileBytes, file.type);
+        storageUploadResult = await storageUpload(storageKey, fileBytes, file.type);
       } catch (err) {
         console.error('Falha no upload de mídia classificada:', err);
         return json({ success: false, error: 'upload_failed', message: 'Não foi possível armazenar a imagem.' }, 500, allowedOrigin);
       }
 
-      const publicUrl = storagePublicUrl(r2Key);
+      const publicUrl = storagePublicUrl(storageKey);
       if (!publicUrl) {
-        await storageDelete([r2Key]);
+        await storageDelete([storageKey]);
         return json({ success: false, error: 'public_url_failed', message: 'Não foi possível concluir o upload.' }, 500, allowedOrigin);
       }
 

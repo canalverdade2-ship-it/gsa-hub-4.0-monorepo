@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { uploadFile, getPrivateFileUrl, removeFile, privateBucketPath } from './storage';
 
-const STORAGE_PREFIX = 'r2://';
+const STORAGE_PREFIX = 'vps://';
 const PRIVATE_BUCKETS = new Set(['documentos_prestador', 'entregas_demandas']);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -101,8 +101,8 @@ export async function uploadProviderPrivateFile(input: {
   if (!scope) throw new Error('Escopo de arquivo inválido.');
 
   const path = `${providerId}/${scope}/${Date.now()}_${crypto.randomUUID()}.${extension}`;
-  const { path: r2Path } = await uploadFile(input.file, input.bucket, path);
-  return toStorageReference(input.bucket, r2Path);
+  const { path: storagePath } = await uploadFile(input.file, input.bucket, path);
+  return toStorageReference(input.bucket, storagePath);
 }
 
 export async function resolveProviderFileUrl(reference: string, expiresInSeconds = 300) {

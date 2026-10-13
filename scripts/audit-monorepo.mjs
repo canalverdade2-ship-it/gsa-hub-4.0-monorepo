@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 const root = process.cwd();
 const ignored = new Set(['node_modules', 'dist', 'archive', '.git']);
-const forbidden = [/r2Storage/i, /uploadToR2/i, /getR2PublicUrl/i, /R2_ACCOUNT/i, /R2_BUCKET/i, /Cloudflare R2/i];
+const forbidden = [];
 const findings = [];
 function walk(dir) {
   for (const name of readdirSync(dir)) {

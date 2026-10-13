@@ -33,7 +33,7 @@ const GLOBAL_ACTIONS: ActionItem[] = [
   { id: 'sys_acessos', title: 'Controle de Acessos', subtitle: 'Sistema', icon: ShieldCheck, keywords: ['acessos', 'permissoes', 'usuarios', 'colaboradores', 'senhas'], module: 'acessos' },
   { id: 'sys_config', title: 'Configurações Globais', subtitle: 'Sistema', icon: Settings, keywords: ['configuracoes', 'ajustes', 'parametros', 'empresa', 'whatsapp'], module: 'configuracoes' },
   { id: 'sys_automacoes', title: 'Automações (Scraping)', subtitle: 'Sistema', icon: Bot, keywords: ['robos', 'scraping', 'automacoes', 'n8n'], module: 'automacoes' },
-  { id: 'sys_monitor', title: 'Saúde do Sistema', subtitle: 'Sistema', icon: Terminal, keywords: ['monitor', 'servidor', 'vps', 'cloudflare', 'banco de dados'], module: 'sistema' },
+  { id: 'sys_monitor', title: 'Saúde do Sistema', subtitle: 'Sistema', icon: Terminal, keywords: ['monitor', 'servidor', 'vps', 'banco de dados'], module: 'sistema' },
   { id: 'sys_gsatv', title: 'GSA TV', subtitle: 'Gestão', icon: Tv2, keywords: ['gsa tv', 'tv', 'programacao', 'midia'], module: 'gsa-tv' },
 ];
 

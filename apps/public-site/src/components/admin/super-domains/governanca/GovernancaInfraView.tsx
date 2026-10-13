@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Users,
   Terminal as TerminalIcon,
-  Globe,
   Cpu,
   CheckCircle2,
   Lock,
@@ -22,7 +21,6 @@ import { supabase } from '../../../../lib/supabase';
 import { formatDateTime } from '../../../../lib/utils';
 import { sendAdminWhatsAppNotification } from '../../../../utils/n8nWhatsApp';
 import { OracleMetricsPanel } from '../../infra/OracleMetricsPanel';
-import { CloudflareManager } from '../../infra/CloudflareManager';
 import { WhatsAppQRCodeManager } from '../../infra/WhatsAppQRCodeManager';
 import { WhatsAppHealthMonitor } from '../../WhatsAppHealthMonitor';
 import { TacticalDataGrid, CommandSlideOver, StatusBadge, GridColumn } from '../shared';
@@ -47,7 +45,7 @@ function formatBytes(value: unknown) {
 }
 
 export function GovernancaInfraView() {
-  const [activeTab, setActiveTab] = useState<'vps' | 'cloudflare' | 'database' | 'whatsapp'>('vps');
+  const [activeTab, setActiveTab] = useState<'vps' | 'database' | 'whatsapp'>('vps');
   const [snapshot, setSnapshot] = useState<SystemSnapshot>({ metrics: {}, tables: [], users_list: [] });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -158,7 +156,7 @@ export function GovernancaInfraView() {
     try {
       const success = await sendAdminWhatsAppNotification({
         title: 'Alerta de Observabilidade GSA OS',
-        message: 'Status do sistema verificado via Painel Governança. Todos os serviços Oracle VPS, Cloudflare e PostgreSQL estão operando 100%.',
+        message: 'Status do sistema verificado via Painel Governança. Todos os serviços da VPS e PostgreSQL estão operando 100%.',
         category: 'SISTEMA',
       });
       if (success) {
@@ -279,17 +277,6 @@ export function GovernancaInfraView() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('cloudflare')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
-              activeTab === 'cloudflare' ? 'bg-indigo-600 text-white shadow-2xs' : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <Globe className="h-3.5 w-3.5 text-amber-200" />
-            <span>Cloudflare CDN & Cache</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setActiveTab('database')}
             className={`px-3.5 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
               activeTab === 'database' ? 'bg-indigo-600 text-white shadow-2xs' : 'text-slate-600 hover:bg-slate-100'
@@ -345,11 +332,6 @@ export function GovernancaInfraView() {
             <LazyVPSTerminal key={`term-${refreshKey}`} />
           </Suspense>
         </div>
-      )}
-
-      {/* â”€â”€ Tab: Cloudflare â”€â”€ */}
-      {activeTab === 'cloudflare' && (
-        <CloudflareManager key={`cf-${refreshKey}`} />
       )}
 
       {/* ── Tab: WhatsApp ── */}

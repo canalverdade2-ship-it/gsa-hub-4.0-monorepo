@@ -301,7 +301,7 @@ async function handleFileAction(body: RequestBody): Promise<Response> {
     const safeName = String(body.file_name).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 150);
     const key = `private/product-imports/${importId}/${safeName}`;
     await storageUpload(key, new TextEncoder().encode(String(body.file_content)), 'text/plain');
-    return response({ success: true, import_id: importId, r2_key: key });
+    return response({ success: true, import_id: importId, storage_key: key });
   }
 
   if (body.action === 'analyze_media') {

@@ -5,6 +5,7 @@ import { GSAEnterpriseHomeFinal } from '../components/public/GSAEnterpriseHomeFi
 import { ClientAccessModalWithReturn as ClientAccessModal, type ClientAccessMode } from '../components/auth/ClientAccessModalWithReturn';
 import { AccessibleDialog } from '../components/ui/AccessibleDialog';
 import { RestrictedAccessHubPage } from './RestrictedAccessHubPage';
+import { AdvertisingPage } from '../components/public/AdvertisingPage';
 import { useAppLocation } from '../routing/useAppLocation';
 import { navigate, updateRouteQuery } from '../routing/navigationService';
 import {
@@ -161,6 +162,12 @@ export function Home({
         <Suspense fallback={<PublicPageLoading />}>
           <SystemsPageFinal onBack={() => changePublicPage('home')} onLogin={handlePublicLogin} />
         </Suspense>
+      ) : publicPage === 'ads' || publicPage === 'advertise' ? (
+        <AdvertisingPage
+          mode={publicPage === 'advertise' ? 'advertise' : 'showcase'}
+          onBack={() => changePublicPage('home')}
+          onLogin={handlePublicLogin}
+        />
       ) : (
         <GSAEnterpriseHomeFinal
           publicPage={publicPage}
